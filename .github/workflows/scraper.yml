@@ -1,10 +1,10 @@
-name: JAV.guru Scraper & Commit Results
+name: JAV Guru Scraper
 
 on:
   workflow_dispatch: # manual run only
 
 permissions:
-  contents: write  # allow pushing commits using GITHUB_TOKEN
+  contents: write  # needed to push commits with GITHUB_TOKEN
 
 jobs:
   scrape:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # ensure history so commits work
+          fetch-depth: 0  # ensure full history for commits
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -30,6 +30,10 @@ jobs:
         run: |
           python scraper.py
 
+      - name: Build index.html
+        run: |
+          python build_index.py
+
       - name: Show produced files
         run: |
           echo "Files in results/:"
@@ -40,14 +44,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Add any CSVs in results/
-          git add results/*.csv || true
+          # Stage CSV + index.html
+          git add results/*.csv results/index.html || true
 
-          # Only commit if there are changes
+          # Commit only if there are changes
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "chore(scraper): add/update results CSVs ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || true
+            git commit -m "chore(scraper): update results and index ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || true
             git push
-            echo "✅ Committed and pushed results."
+            echo "✅ Committed and pushed results + index."
           else
             echo "ℹ️ No changes to commit."
           fi
@@ -56,4 +60,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: javguru-results
-          path: results/*.csv
+          path: results/*
