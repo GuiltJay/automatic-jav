@@ -1,8 +1,10 @@
 name: JAV.guru Scraper & Publish Results
 
 on:
-  workflow_dispatch: # Manual trigger only
-
+  schedule:
+    - cron: "30 6 * * *"  # Every day at 12:00 PM IST
+  workflow_dispatch:      # Optional: also allow manual runs
+  
 permissions:
   contents: write  # Allow committing changes
 
