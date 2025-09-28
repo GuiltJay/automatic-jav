@@ -1,20 +1,20 @@
-name: JAV Guru Scraper
+name: JAV.guru Scraper
 
 on:
-  workflow_dispatch: # manual run only
+  workflow_dispatch: # manual trigger only
 
 permissions:
-  contents: write  # needed to push commits with GITHUB_TOKEN
+  contents: write  # allow committing changes
 
 jobs:
-  scrape:
+  scrape-and-publish:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # ensure full history for commits
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -34,7 +34,7 @@ jobs:
         run: |
           python build_index.py
 
-      - name: Show produced files
+      - name: Show results folder
         run: |
           echo "Files in results/:"
           ls -la results || true
@@ -44,10 +44,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Stage CSV + index.html
           git add results/*.csv results/index.html || true
 
-          # Commit only if there are changes
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "chore(scraper): update results and index ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || true
             git push
@@ -56,8 +54,11 @@ jobs:
             echo "ℹ️ No changes to commit."
           fi
 
-      - name: Upload artifact (results)
-        uses: actions/upload-artifact@v4
+      - name: Deploy results to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v7
         with:
-          name: javguru-results
-          path: results/*
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./results
+          user_name: "github-actions[bot]"
+          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          keep_files: true
