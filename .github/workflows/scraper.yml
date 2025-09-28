@@ -1,0 +1,59 @@
+name: JAV.guru Scraper & Commit Results
+
+on:
+  workflow_dispatch: # manual run only
+
+permissions:
+  contents: write  # allow pushing commits using GITHUB_TOKEN
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # ensure history so commits work
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cloudscraper beautifulsoup4
+
+      - name: Run scraper
+        run: |
+          python scraper.py
+
+      - name: Show produced files
+        run: |
+          echo "Files in results/:"
+          ls -la results || true
+
+      - name: Commit results back to repo (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Add any CSVs in results/
+          git add results/*.csv || true
+
+          # Only commit if there are changes
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "chore(scraper): add/update results CSVs ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || true
+            git push
+            echo "✅ Committed and pushed results."
+          else
+            echo "ℹ️ No changes to commit."
+          fi
+
+      - name: Upload artifact (results)
+        uses: actions/upload-artifact@v4
+        with:
+          name: javguru-results
+          path: results/*.csv
