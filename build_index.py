@@ -53,6 +53,7 @@ def build_index():
     html.append("</ul>")
 
     # Show preview of the newest file
+    """
     latest_file = csv_files[0]
     html.append(f"<h2>Preview of {latest_file}</h2>")
     html.append("<table>")
@@ -69,6 +70,7 @@ def build_index():
     except Exception as e:
         html.append(f"<tr><td colspan='2'>Error reading {latest_file}: {e}</td></tr>")
     html.append("</table>")
+    """
 
     # End HTML
     html += ["</body>", "</html>"]
