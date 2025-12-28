@@ -23,7 +23,7 @@ pattern = re.compile(r"^https?://jav\.guru/\d+/.+")
 results = set()
 
 # Ensure results folder exists
-OUT_DIR = "results"
+OUT_DIR = "results/raw"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 scraper = cloudscraper.create_scraper()  # uses cloudscraper session

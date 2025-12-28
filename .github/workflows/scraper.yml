@@ -29,13 +29,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install cloudscraper beautifulsoup4
 
-      - name: Run scraper
+      - name: Run Full Pipeline
         run: |
-          python scraper.py
-
-      - name: Build index.html
-        run: |
-          python build_index.py
+          bash run_pipeline.sh
 
       - name: Show results folder
         run: |
@@ -61,7 +57,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./results
+          publish_dir: ./docs
           user_name: "github-actions[bot]"
           user_email: "41898282+github-actions[bot]@users.noreply.github.com"
           keep_files: true
