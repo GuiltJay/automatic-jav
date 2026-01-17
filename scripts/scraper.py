@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 BASE_URL = "https://jav.guru/page/{}/"
-PAGES_TO_FETCH = 10  # adjust as needed
+PAGES_TO_FETCH = 210  # adjust as needed
 
 HEADERS = {
     "User-Agent": (
