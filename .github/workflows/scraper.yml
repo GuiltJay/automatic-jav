@@ -1,20 +1,22 @@
-name: Scrape and commit data
+name: Scrape data and publish Pages
 
 on:
   schedule:
-    - cron: "0 */6 * * *"   # every 6 hours
+    - cron: "0 16 * * *"   # every 6 hours
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  scrape:
+  pipeline: 
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,12 +27,15 @@ jobs:
         run: |
           pip install -r requirements.txt || true
 
-      - name: Run pipeline (scrape + process)
+      - name: Run pipeline (scrape + build)
         run: |
           chmod +x run_pipeline.sh
           ./run_pipeline.sh
 
-      - name: Commit CSV results (if changed)
+      # -------------------------
+      # Commit DATA to main
+      # -------------------------
+      - name: Commit CSV data (if changed)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -45,3 +50,20 @@ jobs:
           else
             echo "ℹ️ No data changes"
           fi
+
+      # -------------------------
+      # Publish Pages
+      # -------------------------
+      - name: Publish GitHub Pages
+        run: |
+          git checkout --orphan gh-pages
+          git rm -rf .
+
+          cp -r docs/* .
+          touch .nojekyll
+
+          git add .
+          git commit -m "pages: deploy site ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+          git push -f origin gh-pages
+
+          echo "🚀 Pages updated"
