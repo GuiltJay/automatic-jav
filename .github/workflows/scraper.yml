@@ -2,7 +2,7 @@ name: JAV.guru Scraper & Publish Results
 
 on:
   schedule:
-    - cron: "30 11 * * *"  # Every day at 5:00 PM IST
+    - cron: "0 10 * * *"  # Every day at 5:00 PM IST
   workflow_dispatch:        # Optional: also allow manual runs
 
   
