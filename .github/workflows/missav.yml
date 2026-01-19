@@ -1,42 +1,94 @@
 name: MiisAv Scraper
-on:
-  workflow_dispatch:        # Optional: also allow manual runs
 
-  
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"   # optional, remove if not needed
+
 permissions:
-  contents: write  # Allow committing changes
+  contents: write
 
 jobs:
   scrape-and-publish:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------- CHECKOUT ----------
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # ---------- PYTHON (pip cache enabled) ----------
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.11"
+          cache: pip
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-             libxml2-dev \
-             libxslt1-dev \
-              python3-dev \
-              build-essential
-          python -m pip install --upgrade pip
-          pip install cloudscraper beautifulsoup4 crawl4ai
-          crawl4ai-setup
+      # ---------- APT CACHE ----------
+      - name: Cache APT
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt
+            /var/lib/apt/lists
+          key: apt-${{ runner.os }}
 
-      - name: Run Full Pipeline
+      # ---------- SYSTEM DEPENDENCIES ----------
+      - name: Install system dependencies
         run: |
-          python scripts/missav.py 
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libxml2-dev \
+            libxslt1-dev \
+            python3-dev \
+            build-essential
 
-      - name: Show results folder
+      # ---------- PYTHON DEPENDENCIES ----------
+      - name: Install Python dependencies
         run: |
-           cat docs/Missav_links.txt 
+          python -m pip install --upgrade pip wheel
+          pip install --prefer-binary \
+            cloudscraper \
+            beautifulsoup4 \
+            crawl4ai
+
+      # ---------- CRAWL4AI CACHE ----------
+      - name: Cache Crawl4AI
+        uses: actions/cache@v4
+        with:
+          path: ~/.crawl4ai
+          key: crawl4ai-${{ runner.os }}
+
+      - name: Crawl4AI setup (cached)
+        run: |
+          if [ ! -d "$HOME/.crawl4ai" ]; then
+            crawl4ai-setup
+          fi
+
+      # ---------- RUN SCRAPER ----------
+      - name: Run Missav scraper
+        run: |
+          python scripts/missav.py
+
+      # ---------- SHOW OUTPUT ----------
+      - name: Show output
+        run: |
+          echo "===== Missav Links ====="
+          cat docs/Missav_links.txt || echo "No output file"
+
+      # ---------- AUTO COMMIT ----------
+      - name: Commit & push changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add docs/Missav_links.txt || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update Missav links"
+            git push
+          fi
