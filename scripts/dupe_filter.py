@@ -4,8 +4,9 @@ import csv
 from datetime import datetime
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
-RESULTS_DIR = "results/processed"
-OUTPUT_FILE = os.path.join(RESULTS_DIR, "combined.csv")
+RAW_RESULTS_DIR = "results/raw"
+OUTPUT_DIR = "results/processed"
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "combined.csv")
 
 DEDUP_COL = "page_url"   # dedupe key
 IMAGE_COL = "image_url"  # optional; just kept as-is unless you want to dedupe on both
