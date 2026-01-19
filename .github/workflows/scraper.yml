@@ -36,7 +36,7 @@ jobs:
       - name: Show results folder
         run: |
           echo "Files in results/:"
-          ls -la results || true
+          tree results || true
 
       - name: Commit CSV data (if changed)
         run: |
