@@ -45,15 +45,15 @@ def normalize_url(url: str) -> str:
         return url
 
 def list_csv_files():
-    if not os.path.isdir(RESULTS_DIR):
-        raise FileNotFoundError(f"Results directory '{RESULTS_DIR}' not found.")
+    if not os.path.isdir(RAW_RESULTS_DIR):
+        raise FileNotFoundError(f"Results directory '{RAW_RESULTS_DIR}' not found.")
 
     files = [
-        f for f in os.listdir(RESULTS_DIR)
+        f for f in os.listdir(RAW_RESULTS_DIR)
         if f.lower().endswith(".csv") and f != os.path.basename(OUTPUT_FILE)
     ]
     # newest first by mtime
-    files.sort(key=lambda f: os.path.getmtime(os.path.join(RESULTS_DIR, f)), reverse=True)
+    files.sort(key=lambda f: os.path.getmtime(os.path.join(RAW_RESULTS_DIR, f)), reverse=True)
     return files
 
 def merge_csvs():
@@ -76,7 +76,7 @@ def merge_csvs():
     duplicates = 0
 
     for fname in csv_files:
-        path = os.path.join(RESULTS_DIR, fname)
+        path = os.path.join(RAW_RESULTS_DIR, fname)
         mtime = os.path.getmtime(path)
 
         with open(path, newline="", encoding="utf-8") as f:
