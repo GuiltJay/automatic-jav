@@ -8,6 +8,7 @@ import re
 import sys
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
+import os
 
 # Try importing crawl4ai.AsyncWebCrawler, otherwise we'll use aiohttp
 try:
