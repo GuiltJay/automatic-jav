@@ -13,9 +13,9 @@ PAGES_TO_FETCH = 20  # adjust as needed
 
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "Mozilla/5.0 (X11; Linux x86_64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/129.0.0.0 Safari/537.36"
+        "Chrome/128.0.0.0 Safari/537.36"
     )
 }
 
@@ -26,7 +26,15 @@ results = set()
 OUT_DIR = "results/raw"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-scraper = cloudscraper.create_scraper()  # uses cloudscraper session
+scraper = cloudscraper.create_scraper(
+    browser={
+        "browser": "chrome",
+        "platform": "linux",
+        "mobile": False,
+    }
+)
+
+scraper.headers.update(HEADERS)
 
 for page in range(1, PAGES_TO_FETCH + 1):
     url = BASE_URL.format(page)
