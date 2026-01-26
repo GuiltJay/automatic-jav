@@ -37,7 +37,7 @@ run_py () {
 # ----------------------------------------
 # 1) Scrape -> results/raw/
 # ----------------------------------------
-run_py "$SCRIPTS_DIR/scraper.py"
+run_py "$SCRIPTS_DIR/scraper_new.py"
 
 # ----------------------------------------
 # 2) Dedupe/filter (optional)
