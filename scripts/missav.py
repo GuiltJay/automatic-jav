@@ -363,7 +363,7 @@ async def crawl_listing_posts(
 
 
 async def main() -> None:
-    START_URL = "https://missav123.com/dm291/en/today-hot"
+    START_URL = "https://jav.guru/page/5/"
     max_pages = 50
 
     concurrency = 12  # aiohttp can handle higher; lower if you get 429s
