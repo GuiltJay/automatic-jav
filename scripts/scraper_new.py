@@ -1,99 +1,203 @@
+
 #!/usr/bin/env python3
-from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
+from __future__ import annotations
+
+import asyncio
+import random
 import re
 import csv
-import time
-import random
 import os
 from datetime import datetime
+from typing import Optional, Set, Tuple
 
-# ---------------- CONFIG ----------------
+import aiohttp
+from bs4 import BeautifulSoup
+
+from crawl4ai import AsyncWebCrawler
+
+# ================= CONFIG =================
 
 BASE_URL = "https://jav.guru/page/{}/"
 PAGES_TO_FETCH = 20
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/128.0.0.0 Safari/537.36"
-)
-
-pattern = re.compile(r"^https?://jav\.guru/\d+/.+")
-results = set()
+MAX_CONCURRENCY = 6
+RETRIES = 3
+TIMEOUT = 30
 
 OUT_DIR = "results/raw"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# ---------------- MAIN ----------------
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/128 Safari/537.36"
+    ),
+    "Accept": "text/html",
+    "Connection": "keep-alive",
+}
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
+POST_PATTERN = re.compile(r"^https?://jav\.guru/\d+/.+")
 
-    context = browser.new_context(
-        user_agent=USER_AGENT,
-        viewport={"width": 1280, "height": 800},
+# ==========================================
+
+results: Set[Tuple[str, str]] = set()
+results_lock = asyncio.Lock()
+
+# ================= CF BOOTSTRAP =================
+
+async def get_cf_cookies(start_url: str) -> dict:
+    """
+    Use crawl4ai ONCE to pass Cloudflare
+    and extract cf_clearance cookie.
+    """
+    print("🛡️ Getting Cloudflare clearance via crawl4ai...")
+    async with AsyncWebCrawler() as crawler:
+        res = await crawler.arun(start_url)
+
+        cookies = {}
+        if hasattr(res, "cookies") and res.cookies:
+            cookies.update(res.cookies)
+
+        if not cookies:
+            print("⚠️ No cookies extracted — fallback will be used")
+        else:
+            print(f"✅ CF cookies obtained: {list(cookies.keys())}")
+
+        return cookies
+
+
+# ================= FETCH =================
+
+async def fetch_aiohttp(
+    session: aiohttp.ClientSession,
+    url: str,
+) -> Optional[str]:
+    try:
+        async with session.get(url) as r:
+            if r.status != 200:
+                return None
+            text = await r.text(errors="ignore")
+
+            # reject CF challenge html
+            if "cf-browser-verification" in text.lower():
+                return None
+
+            return text
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        return None
+
+
+async def fetch_crawl4ai(url: str) -> Optional[str]:
+    try:
+        async with AsyncWebCrawler() as crawler:
+            res = await crawler.arun(url)
+            return res.html if res and res.html else None
+    except Exception:
+        return None
+
+
+async def fetch_with_retries(
+    session: aiohttp.ClientSession,
+    url: str,
+) -> Optional[str]:
+    for attempt in range(RETRIES + 1):
+        html = await fetch_aiohttp(session, url)
+        if html:
+            return html
+
+        # last-chance fallback
+        if attempt == RETRIES:
+            print("🛡️ Fallback crawl4ai:", url)
+            return await fetch_crawl4ai(url)
+
+        await asyncio.sleep(min(4, 0.6 * (2 ** attempt)) * random.uniform(0.8, 1.2))
+
+    return None
+
+
+# ================= PARSING (OLD LOGIC) =================
+
+def extract_links(html: str) -> Set[Tuple[str, str]]:
+    soup = BeautifulSoup(html, "lxml")
+    found = set()
+
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag["href"]
+        if POST_PATTERN.match(href):
+            img = a_tag.find("img")
+            if img and img.get("src"):
+                found.add((href, img["src"]))
+
+    return found
+
+
+# ================= WORKER =================
+
+async def process_page(
+    page_no: int,
+    session: aiohttp.ClientSession,
+    sem: asyncio.Semaphore,
+):
+    url = BASE_URL.format(page_no)
+
+    async with sem:
+        html = await fetch_with_retries(session, url)
+
+    if not html:
+        print(f"❌ Page {page_no} failed")
+        return
+
+    found = extract_links(html)
+
+    async with results_lock:
+        results.update(found)
+
+    print(f"✅ Page {page_no}: +{len(found)}")
+
+
+# ================= MAIN =================
+
+async def main():
+    # Step 1 — pass CF once
+    cookies = await get_cf_cookies(BASE_URL.format(1))
+
+    timeout = aiohttp.ClientTimeout(total=TIMEOUT)
+    connector = aiohttp.TCPConnector(
+        limit=40,
+        limit_per_host=15,
+        ttl_dns_cache=300,
     )
 
-    page = context.new_page()
+    sem = asyncio.Semaphore(MAX_CONCURRENCY)
 
-    # 🔥 Warm up homepage (Cloudflare trust)
-    print("🔥 Warming up homepage")
-    page.goto("https://jav.guru/", wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_timeout(3000)
+    async with aiohttp.ClientSession(
+        headers=HEADERS,
+        cookies=cookies,
+        timeout=timeout,
+        connector=connector,
+    ) as session:
 
-    for page_num in range(1, PAGES_TO_FETCH + 1):
-        url = BASE_URL.format(page_num)
-        print(f"📥 Fetching: {url}")
+        tasks = [
+            process_page(page, session, sem)
+            for page in range(1, PAGES_TO_FETCH + 1)
+        ]
+        await asyncio.gather(*tasks)
 
-        try:
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
+    # Save CSV
+    today = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    filepath = os.path.join(OUT_DIR, f"jav_links_{today}.csv")
 
-            # wait for real content
-            page.wait_for_selector(
-                "a[href^='https://jav.guru/']",
-                timeout=30000
-            )
+    with open(filepath, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["page_url", "image_url"])
+        for row in sorted(results):
+            writer.writerow(row)
 
-            # trigger lazy loading
-            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            page.wait_for_timeout(2000)
+    print(f"\n🎉 Saved {len(results)} entries → {filepath}")
 
-            html = page.content()
 
-        except Exception as e:
-            print(f"❌ Failed {url}: {e}")
-            continue
-
-        # -------- OLD LOGIC (UNCHANGED) --------
-
-        soup = BeautifulSoup(html, "html.parser")
-
-        for a_tag in soup.find_all("a", href=True):
-            href = a_tag["href"]
-            if pattern.match(href):
-                img = a_tag.find("img")
-                if img:
-                    img_url = img.get("data-src") or img.get("src")
-                    if img_url:
-                        results.add((href, img_url))
-
-        print(f"✅ Page {page_num} done, total links: {len(results)}")
-
-        time.sleep(random.uniform(3, 6))  # human delay
-
-    browser.close()
-
-# ---------------- SAVE CSV ----------------
-
-today = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-filename = f"jav_links_{today}.csv"
-filepath = os.path.join(OUT_DIR, filename)
-
-with open(filepath, "w", newline="", encoding="utf-8") as f:
-    writer = csv.writer(f)
-    writer.writerow(["page_url", "image_url"])
-    for row in sorted(results):
-        writer.writerow(row)
-
-print(f"\n🎉 Saved {len(results)} unique entries to {filepath}")
+if __name__ == "__main__":
+    await main()
