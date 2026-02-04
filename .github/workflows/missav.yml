@@ -9,7 +9,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  CACHE_IMAGE: ghcr.io/<your-username>/docker-cache:base
+  CACHE_IMAGE: ghcr.io/guiltjay/docker-cache:base
 
 jobs:
   scrape-and-publish:
