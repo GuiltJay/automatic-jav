@@ -18,7 +18,7 @@ from crawl4ai import AsyncWebCrawler
 # ================= CONFIG =================
 
 BASE_URL = "https://jav.guru/page/{}/"
-PAGES_TO_FETCH = 100
+PAGES_TO_FETCH = 500
 
 MAX_CONCURRENCY = 6
 RETRIES = 3
