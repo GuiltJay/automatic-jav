@@ -204,6 +204,51 @@ async def process_url(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
 
 
 # -------------------------
+# Pagination (NEW)
+# -------------------------
+
+async def collect_post_urls_with_pagination(
+    start_url: str,
+    fetcher: Fetcher,
+    max_pages: int = 30,
+) -> list[str]:
+    all_posts: set[str] = set()
+
+    for page in range(1, max_pages + 1):
+        if page == 1:
+            url = start_url
+        else:
+            url = urljoin(start_url.rstrip("/") + "/", f"page/{page}")
+
+        html = await fetcher.fetch(url)
+        if not html:
+            break
+
+        soup = BeautifulSoup(html, "html.parser")
+        page_posts = [
+            urljoin(start_url, a["href"])
+            for a in soup.select("div.thumbnail a[href]")
+            if "/en/" in a["href"]
+        ]
+
+        if not page_posts:
+            break
+
+        new = 0
+        for p in page_posts:
+            if p not in all_posts:
+                all_posts.add(p)
+                new += 1
+
+        print(f"[page {page}] {url} → {new} new posts (total {len(all_posts)})")
+
+        if new == 0:
+            break
+
+    return sorted(all_posts)
+
+
+# -------------------------
 # Merge daily CSVs
 # -------------------------
 
@@ -247,17 +292,11 @@ async def main():
     sem = asyncio.Semaphore(12)
 
     async with Fetcher(use_crawl4ai=False) as fetcher:
-        listing_html = await fetcher.fetch(START_URL)
-        if not listing_html:
-            print("[!] Failed to fetch listing")
-            return
-
-        soup = BeautifulSoup(listing_html, "html.parser")
-        post_urls = [
-            urljoin(START_URL, a["href"])
-            for a in soup.select("div.thumbnail a[href]")
-            if "/en/" in a["href"]
-        ]
+        post_urls = await collect_post_urls_with_pagination(
+            start_url=START_URL,
+            fetcher=fetcher,
+            max_pages=30,
+        )
 
         tasks = [process_url(u, fetcher, sem) for u in post_urls]
         results = await asyncio.gather(*tasks)
@@ -309,10 +348,6 @@ async def main():
         json.dump(rows, f, indent=2, ensure_ascii=False)
 
     print(f"[✓] Daily files written: {csv_path}, {json_path}")
-
-    # -------------------------
-    # MERGE TO MASTER
-    # -------------------------
 
     merge_daily_csvs(
         raw_dir=raw_dir,
