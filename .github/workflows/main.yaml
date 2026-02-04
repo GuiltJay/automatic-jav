@@ -1,0 +1,85 @@
+name: Main Scraper
+
+on:
+  schedule:
+    - cron: "0 10 * * *"  # 5:00 PM IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # -------------------------
+      # Build Docker image
+      # -------------------------
+      - name: Build Docker image
+        run: |
+          docker build -t javguru-pipeline .
+
+      # -------------------------
+      # Run pipeline container
+      # -------------------------
+      - name: Run pipeline
+        run: |
+          docker run --name javguru-run javguru-pipeline
+
+      # -------------------------
+      # Copy outputs from container
+      # -------------------------
+      - name: Copy output from container
+        run: |
+          rm -rf docs results
+          docker cp javguru-run:/app/docs ./docs
+          docker cp javguru-run:/app/results ./results
+
+      - name: Cleanup container
+        if: always()
+        run: |
+          docker rm -f javguru-run || true
+
+      # -------------------------
+      # Debug
+      # -------------------------
+      - name: Show results
+        run: |
+          tree docs || true
+          tree results || true
+
+      # -------------------------
+      # Commit results
+      # -------------------------
+      - name: Commit generated files (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add docs/*.html results/**/*.csv || true
+
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(data): update results ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+            git push origin main
+            echo "✅ Data committed"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+
+      # -------------------------
+      # Publish Pages
+      # -------------------------
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          user_name: "github-actions[bot]"
+          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          keep_files: false
