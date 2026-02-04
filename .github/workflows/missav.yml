@@ -22,27 +22,21 @@ jobs:
         run: |
           docker build -t missav-pipeline .
 
-      # ---------- RUN MISSAV (override CMD) ----------
+      # ---------- RUN MISSAV (VOLUME MOUNTED) ----------
       - name: Run MissAV pipeline
         run: |
-       docker run --rm  -v "$PWD/results:/app/results"  missav-pipeline  python scripts/missav.py
-          
-      # ---------- COPY OUTPUT FROM CONTAINER ----------
-      - name: Copy output from container
-        run: |
-          rm -rf docs
-          docker cp missav-run:/app/docs ./docs
-
-      - name: Cleanup container
-        if: always()
-        run: |
-          docker rm -f missav-run || true
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}/results:/app/results" \
+            missav-pipeline \
+            python scripts/missav.py
 
       # ---------- DEBUG ----------
-      - name: Show output
+      - name: Show results
         run: |
-          echo "===== MissAV Output ====="
-          ls -la docs || true
+          echo "===== raw_missav ====="
+          ls -la results/raw_missav || true
+          echo "===== processed ====="
+          ls -la results/processed || true
 
       # ---------- COMMIT GENERATED FILES ----------
       - name: Commit & push data
@@ -50,13 +44,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add docs || true
+          git add results || true
 
           if git diff --cached --quiet; then
             echo "ℹ️ No changes to commit"
           else
-            git commit -m "chore(data): update MissAV site ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+            git commit -m "chore(data): update MissAV results ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
             git push origin main
+            echo "✅ Changes pushed"
           fi
 
       # ---------- 🚀 PUBLISH TO GITHUB PAGES ----------
@@ -64,7 +59,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          publish_dir: ./results
           user_name: "github-actions[bot]"
           user_email: "41898282+github-actions[bot]@users.noreply.github.com"
           keep_files: false
