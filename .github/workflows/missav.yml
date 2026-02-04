@@ -25,7 +25,7 @@ jobs:
       # ---------- RUN MISSAV (override CMD) ----------
       - name: Run MissAV pipeline
         run: |
-          docker run --name missav-run missav-pipeline python scripts/missav.py
+       docker run --rm  -v "$PWD/results:/app/results"  missav-pipeline  python scripts/missav.py
           
       # ---------- COPY OUTPUT FROM CONTAINER ----------
       - name: Copy output from container
