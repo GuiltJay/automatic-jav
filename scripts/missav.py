@@ -171,9 +171,9 @@ class Fetcher:
 # Parsing helpers
 # -------------------------
 
-def extract_video_code(page_url: str) -> Optional[str]:
-    m = re.search(r"/(dm\d+)(?:/|$)", page_url, re.I)
-    return m.group(1).lower() if m else None
+def extract_video_code(url: str) -> str | None:
+    slug = urlparse(url).path.rstrip("/").split("/")[-1]
+    return slug.lower() if re.fullmatch(r"[a-z0-9]+-\d+", slug, re.I) else None
 
 
 def infer_quality(playlist_url: str) -> str:
@@ -183,7 +183,7 @@ def infer_quality(playlist_url: str) -> str:
         return "720p"
     if "480" in playlist_url:
         return "480p"
-    return "unknown"
+    return "playlist"
 
 
 def infer_source(playlist_url: str) -> str:
