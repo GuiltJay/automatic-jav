@@ -1,8 +1,6 @@
 name: Jav Scraper
 
 on:
-  schedule:
-    - cron: "0 10 * * *"  # 5:00 PM IST
   workflow_dispatch:
 
 permissions:
