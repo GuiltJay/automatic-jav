@@ -281,6 +281,7 @@ footer {{
 
 <script>
 const ITEMS_PER_PAGE = {ITEMS_PER_PAGE};
+const IMAGE_PROXY = "https://proxy.mrspidyxd.workers.dev/?url=";
 const allItems = {js_items};
 
 let filtered = allItems.slice();
@@ -338,7 +339,10 @@ function render() {{
     const dateAdded = it.date_added || '';
 
     const thumb = imgUrl
-      ? `<img src="${{escHtml(imgUrl)}}" loading="lazy" alt="thumb">`
+      ? `<img src="${{escHtml(IMAGE_PROXY + encodeURIComponent(imgUrl))}}"
+               loading="lazy"
+               alt="thumb"
+               onerror="this.outerHTML='<div class=ph aria-label=no\\\\ image></div>'">`
       : `<div class="ph" aria-label="no image"></div>`;
 
     const badge = dateAdded
