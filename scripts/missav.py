@@ -12,9 +12,25 @@ from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
 
-# -------------------------
+# =========================
+# CONFIGURATION
+# =========================
+
+CATEGORIES = [
+    "https://missav123.com/dm291/en/today-hot/",
+    # add more categories if needed
+]
+
+MAX_PAGES = 30              # pagination depth per category
+PAGE_CONCURRENCY = 6        # concurrent listing pages
+POST_CONCURRENCY = 12       # concurrent post pages
+
+RAW_DIR = "results/raw_missav"
+MASTER_CSV = "results/processed/missav.csv"
+
+# =========================
 # Optional engines
-# -------------------------
+# =========================
 
 try:
     from crawl4ai import AsyncWebCrawler  # type: ignore
@@ -28,10 +44,9 @@ try:
 except Exception:
     HAVE_AIOHTTP = False
 
-
-# -------------------------
+# =========================
 # Decoder utilities
-# -------------------------
+# =========================
 
 def unquote_js_string(s: str) -> str:
     if len(s) >= 2 and s[0] in ("'", '"') and s[-1] == s[0]:
@@ -61,8 +76,8 @@ def decode_packed_eval(payload: str) -> Optional[str]:
         return None
 
     args = chunk[idx + 2:]
-    depth = 1
-    buf = []
+    depth, buf = 1, []
+
     for ch in args:
         if ch == "(":
             depth += 1
@@ -72,7 +87,10 @@ def decode_packed_eval(payload: str) -> Optional[str]:
             break
         buf.append(ch)
 
-    parts, cur, sq, dq, esc, pd = [], [], False, False, False, 0
+    parts, cur = [], []
+    sq = dq = esc = False
+    pd = 0
+
     for ch in "".join(buf):
         if esc:
             cur.append(ch)
@@ -95,6 +113,7 @@ def decode_packed_eval(payload: str) -> Optional[str]:
             cur = []
             continue
         cur.append(ch)
+
     if cur:
         parts.append("".join(cur).strip())
 
@@ -108,7 +127,7 @@ def decode_packed_eval(payload: str) -> Optional[str]:
     for n in range(c - 1, -1, -1):
         key = int_to_base(n, a)
         val = k[n] if n < len(k) and k[n] else key
-        p = re.sub(r"\b" + re.escape(key) + r"\b", val, p)
+        p = re.sub(rf"\b{re.escape(key)}\b", val, p)
 
     return p
 
@@ -123,78 +142,58 @@ def extract_playlist_urls(text: str) -> List[str]:
         urls.update(re.findall(pat, text))
     return sorted(urls)
 
-
-# -------------------------
+# =========================
 # Fetching layer
-# -------------------------
+# =========================
 
 @dataclass
 class Fetcher:
-    use_crawl4ai: bool = False
     session: Optional["aiohttp.ClientSession"] = None
-    crawler: Optional["AsyncWebCrawler"] = None
 
     async def __aenter__(self):
-        if self.use_crawl4ai:
-            if not HAVE_CRAWL4AI:
-                raise RuntimeError("crawl4ai not installed")
-            self.crawler = AsyncWebCrawler()
-            await self.crawler.__aenter__()
-            return self
-
-        if not HAVE_AIOHTTP:
-            raise RuntimeError("aiohttp not installed")
-
         timeout = aiohttp.ClientTimeout(total=30)
-        connector = aiohttp.TCPConnector(limit=40, limit_per_host=15)
+        connector = aiohttp.TCPConnector(limit=50, limit_per_host=20)
         self.session = aiohttp.ClientSession(timeout=timeout, connector=connector)
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
-        if self.crawler:
-            await self.crawler.__aexit__(exc_type, exc, tb)
         if self.session:
             await self.session.close()
 
     async def fetch(self, url: str) -> Optional[str]:
         try:
-            if self.crawler:
-                res = await self.crawler.arun(url)
-                return res.html if res.success else None
             async with self.session.get(url) as r:
                 return await r.text(errors="ignore") if r.status == 200 else None
         except Exception:
             return None
 
-
-# -------------------------
+# =========================
 # Parsing helpers
-# -------------------------
+# =========================
 
-def extract_video_code(url: str) -> str | None:
+def extract_video_code(url: str) -> Optional[str]:
     slug = urlparse(url).path.rstrip("/").split("/")[-1]
     return slug.lower() if re.fullmatch(r"[a-z0-9]+-\d+", slug, re.I) else None
 
 
-def infer_quality(playlist_url: str) -> str:
-    if "1080" in playlist_url:
+def infer_quality(url: str) -> str:
+    if "1080" in url:
         return "1080p"
-    if "720" in playlist_url:
+    if "720" in url:
         return "720p"
-    if "480" in playlist_url:
+    if "480" in url:
         return "480p"
     return "playlist"
 
 
-def infer_source(playlist_url: str) -> str:
-    return urlparse(playlist_url).netloc.lower()
+def infer_source(url: str) -> str:
+    return urlparse(url).netloc.lower()
 
-
-# -------------------------
+# =========================
 # Workers
-# -------------------------
+# =========================
 
-async def process_url(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
+async def process_post(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
     async with sem:
         html = await fetcher.fetch(url)
         if not html:
@@ -202,77 +201,80 @@ async def process_url(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
         decoded = decode_packed_eval(html) or html
         return url, extract_playlist_urls(decoded)
 
+# =========================
+# Pagination + categories
+# =========================
 
-# -------------------------
-# Pagination (NEW)
-# -------------------------
-
-async def collect_post_urls_with_pagination(
+async def collect_posts_for_category(
     start_url: str,
     fetcher: Fetcher,
-    max_pages: int = 30,
-) -> list[str]:
-    all_posts: set[str] = set()
+    page_sem: asyncio.Semaphore,
+) -> set[str]:
 
-    for page in range(1, max_pages + 1):
+    async def fetch_page(page: int) -> set[str]:
         if page == 1:
             url = start_url
         else:
             url = urljoin(start_url.rstrip("/") + "/", f"page/{page}")
 
-        html = await fetcher.fetch(url)
+        async with page_sem:
+            html = await fetcher.fetch(url)
+
         if not html:
-            break
+            return set()
 
         soup = BeautifulSoup(html, "html.parser")
-        page_posts = [
+        return {
             urljoin(start_url, a["href"])
             for a in soup.select("div.thumbnail a[href]")
             if "/en/" in a["href"]
-        ]
+        }
 
-        if not page_posts:
+    tasks = [fetch_page(p) for p in range(1, MAX_PAGES + 1)]
+    results = await asyncio.gather(*tasks)
+
+    posts = set()
+    for r in results:
+        if not r:
             break
+        posts.update(r)
 
-        new = 0
-        for p in page_posts:
-            if p not in all_posts:
-                all_posts.add(p)
-                new += 1
+    print(f"[category] {start_url} → {len(posts)} posts")
+    return posts
 
-        print(f"[page {page}] {url} → {new} new posts (total {len(all_posts)})")
 
-        if new == 0:
-            break
+async def collect_all_posts(fetcher: Fetcher) -> List[str]:
+    page_sem = asyncio.Semaphore(PAGE_CONCURRENCY)
+    all_posts = set()
+
+    for cat in CATEGORIES:
+        posts = await collect_posts_for_category(cat, fetcher, page_sem)
+        all_posts.update(posts)
 
     return sorted(all_posts)
 
+# =========================
+# CSV merge
+# =========================
 
-# -------------------------
-# Merge daily CSVs
-# -------------------------
+def merge_daily_csvs():
+    seen, rows = set(), []
 
-def merge_daily_csvs(raw_dir: str, output_csv: str):
-    seen = set()
-    rows = []
-
-    for file in sorted(os.listdir(raw_dir)):
+    for file in sorted(os.listdir(RAW_DIR)):
         if not file.endswith(".csv"):
             continue
 
-        path = os.path.join(raw_dir, file)
-        with open(path, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for r in reader:
+        with open(os.path.join(RAW_DIR, file), newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
                 key = (r["page_url"], r["playlist_url"])
                 if key in seen:
                     continue
                 seen.add(key)
                 rows.append(r)
 
-    os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+    os.makedirs(os.path.dirname(MASTER_CSV), exist_ok=True)
 
-    with open(output_csv, "w", newline="", encoding="utf-8") as f:
+    with open(MASTER_CSV, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
             f,
             fieldnames=["page_url", "video_code", "playlist_url", "quality", "source"]
@@ -280,47 +282,34 @@ def merge_daily_csvs(raw_dir: str, output_csv: str):
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"[✓] Master CSV updated: {output_csv} ({len(rows)} rows)")
+    print(f"[✓] Master CSV updated: {MASTER_CSV} ({len(rows)} rows)")
 
-
-# -------------------------
+# =========================
 # Main
-# -------------------------
+# =========================
 
 async def main():
-    START_URL = "https://missav123.com/dm291/en/today-hot/"
-    sem = asyncio.Semaphore(12)
+    async with Fetcher() as fetcher:
+        post_urls = await collect_all_posts(fetcher)
 
-    async with Fetcher(use_crawl4ai=False) as fetcher:
-        post_urls = await collect_post_urls_with_pagination(
-            start_url=START_URL,
-            fetcher=fetcher,
-            max_pages=30,
-        )
-
-        tasks = [process_url(u, fetcher, sem) for u in post_urls]
+        sem = asyncio.Semaphore(POST_CONCURRENCY)
+        tasks = [process_post(u, fetcher, sem) for u in post_urls]
         results = await asyncio.gather(*tasks)
 
-    # -------------------------
-    # DAILY OUTPUT
-    # -------------------------
-
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    raw_dir = os.path.join("results", "raw_missav")
-    os.makedirs(raw_dir, exist_ok=True)
+    os.makedirs(RAW_DIR, exist_ok=True)
 
-    csv_path = os.path.join(raw_dir, f"Missav_links_{today}.csv")
-    json_path = os.path.join(raw_dir, f"Missav_links_{today}.json")
+    csv_path = f"{RAW_DIR}/Missav_links_{today}.csv"
+    json_path = f"{RAW_DIR}/Missav_links_{today}.json"
 
-    seen = set()
-    rows = []
+    seen, rows = set(), []
 
     for item in results:
         if not item:
             continue
 
         page_url, playlists = item
-        video_code = extract_video_code(page_url)
+        code = extract_video_code(page_url)
 
         for pl in playlists:
             key = (page_url, pl)
@@ -330,33 +319,22 @@ async def main():
 
             rows.append({
                 "page_url": page_url,
-                "video_code": video_code,
+                "video_code": code,
                 "playlist_url": pl,
                 "quality": infer_quality(pl),
                 "source": infer_source(pl),
             })
 
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f,
-            fieldnames=["page_url", "video_code", "playlist_url", "quality", "source"]
-        )
-        writer.writeheader()
-        writer.writerows(rows)
+        csv.DictWriter(f, rows[0].keys()).writeheader()
+        csv.DictWriter(f, rows[0].keys()).writerows(rows)
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(rows, f, indent=2, ensure_ascii=False)
 
     print(f"[✓] Daily files written: {csv_path}, {json_path}")
 
-    merge_daily_csvs(
-        raw_dir=raw_dir,
-        output_csv=os.path.join("results", "processed", "missav.csv")
-    )
-
+    merge_daily_csvs()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("Interrupted", file=sys.stderr)
+    asyncio.run(main())
