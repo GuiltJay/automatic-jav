@@ -215,7 +215,7 @@ async def collect_posts_for_category(
         if page == 1:
             url = start_url
         else:
-            url = urljoin(start_url.rstrip("/") + "/", f"page/{page}")
+            url = urljoin(start_url.rstrip("/") + "?", f"page={page}")
 
         async with page_sem:
             html = await fetcher.fetch(url)
