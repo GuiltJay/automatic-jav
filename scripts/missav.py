@@ -4,7 +4,6 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 import asyncio
 import re
-import sys
 import os
 import csv
 import json
@@ -17,11 +16,11 @@ from datetime import datetime
 # =========================
 
 CATEGORIES = [
-    "https://missav123.com/dm291/en/today-hot/",
-    # add more categories if needed
+    "https://missav123.com/dm291/en/today-hot",
+    # add more categories here
 ]
 
-MAX_PAGES = 30              # pagination depth per category
+MAX_PAGES = 10              # pagination depth per category
 PAGE_CONCURRENCY = 6        # concurrent listing pages
 POST_CONCURRENCY = 12       # concurrent post pages
 
@@ -29,23 +28,36 @@ RAW_DIR = "results/raw_missav"
 MASTER_CSV = "results/processed/missav.csv"
 
 # =========================
-# Optional engines
+# HTTP FETCHER
 # =========================
 
-try:
-    from crawl4ai import AsyncWebCrawler  # type: ignore
-    HAVE_CRAWL4AI = True
-except Exception:
-    HAVE_CRAWL4AI = False
+import aiohttp
 
-try:
-    import aiohttp  # type: ignore
-    HAVE_AIOHTTP = True
-except Exception:
-    HAVE_AIOHTTP = False
+@dataclass
+class Fetcher:
+    session: Optional[aiohttp.ClientSession] = None
+
+    async def __aenter__(self):
+        timeout = aiohttp.ClientTimeout(total=30)
+        connector = aiohttp.TCPConnector(limit=50, limit_per_host=20)
+        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector)
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if self.session:
+            await self.session.close()
+
+    async def fetch(self, url: str) -> Optional[str]:
+        try:
+            async with self.session.get(url) as r:
+                if r.status != 200:
+                    return None
+                return await r.text(errors="ignore")
+        except Exception:
+            return None
 
 # =========================
-# Decoder utilities
+# DECODER UTILITIES
 # =========================
 
 def unquote_js_string(s: str) -> str:
@@ -143,32 +155,7 @@ def extract_playlist_urls(text: str) -> List[str]:
     return sorted(urls)
 
 # =========================
-# Fetching layer
-# =========================
-
-@dataclass
-class Fetcher:
-    session: Optional["aiohttp.ClientSession"] = None
-
-    async def __aenter__(self):
-        timeout = aiohttp.ClientTimeout(total=30)
-        connector = aiohttp.TCPConnector(limit=50, limit_per_host=20)
-        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector)
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        if self.session:
-            await self.session.close()
-
-    async def fetch(self, url: str) -> Optional[str]:
-        try:
-            async with self.session.get(url) as r:
-                return await r.text(errors="ignore") if r.status == 200 else None
-        except Exception:
-            return None
-
-# =========================
-# Parsing helpers
+# PARSING HELPERS
 # =========================
 
 def extract_video_code(url: str) -> Optional[str]:
@@ -190,19 +177,17 @@ def infer_source(url: str) -> str:
     return urlparse(url).netloc.lower()
 
 # =========================
-# Workers
+# PAGINATION HELPERS
 # =========================
 
-async def process_post(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
-    async with sem:
-        html = await fetcher.fetch(url)
-        if not html:
-            return None
-        decoded = decode_packed_eval(html) or html
-        return url, extract_playlist_urls(decoded)
+def build_page_url(base: str, page: int) -> str:
+    if page == 1:
+        return base
+    sep = "&" if "?" in base else "?"
+    return f"{base}{sep}page={page}"
 
 # =========================
-# Pagination + categories
+# PAGINATION + CATEGORIES
 # =========================
 
 async def collect_posts_for_category(
@@ -212,10 +197,7 @@ async def collect_posts_for_category(
 ) -> set[str]:
 
     async def fetch_page(page: int) -> set[str]:
-        if page == 1:
-            url = start_url
-        else:
-            url = urljoin(start_url.rstrip("/") + "?", f"page={page}")
+        url = build_page_url(start_url, page)
 
         async with page_sem:
             html = await fetcher.fetch(url)
@@ -225,7 +207,7 @@ async def collect_posts_for_category(
 
         soup = BeautifulSoup(html, "html.parser")
         return {
-            urljoin(start_url, a["href"])
+            urljoin(start_url + "/", a["href"])
             for a in soup.select("div.thumbnail a[href]")
             if "/en/" in a["href"]
         }
@@ -254,11 +236,26 @@ async def collect_all_posts(fetcher: Fetcher) -> List[str]:
     return sorted(all_posts)
 
 # =========================
-# CSV merge
+# POST PROCESSING
+# =========================
+
+async def process_post(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
+    async with sem:
+        html = await fetcher.fetch(url)
+        if not html:
+            return None
+        decoded = decode_packed_eval(html) or html
+        return url, extract_playlist_urls(decoded)
+
+# =========================
+# CSV MERGE
 # =========================
 
 def merge_daily_csvs():
     seen, rows = set(), []
+
+    if not os.path.isdir(RAW_DIR):
+        return
 
     for file in sorted(os.listdir(RAW_DIR)):
         if not file.endswith(".csv"):
@@ -285,7 +282,7 @@ def merge_daily_csvs():
     print(f"[✓] Master CSV updated: {MASTER_CSV} ({len(rows)} rows)")
 
 # =========================
-# Main
+# MAIN
 # =========================
 
 async def main():
@@ -326,8 +323,12 @@ async def main():
             })
 
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        csv.DictWriter(f, rows[0].keys()).writeheader()
-        csv.DictWriter(f, rows[0].keys()).writerows(rows)
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["page_url", "video_code", "playlist_url", "quality", "source"]
+        )
+        writer.writeheader()
+        writer.writerows(rows)
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(rows, f, indent=2, ensure_ascii=False)
