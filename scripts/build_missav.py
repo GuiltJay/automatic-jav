@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import csv
 import json
 from collections import defaultdict, Counter
@@ -5,41 +6,41 @@ from pathlib import Path
 
 INPUT_CSV = "results/processed/missav.csv"
 OUTPUT_HTML = "docs/missav.html"
-PAGE_SIZE = 25   # mobile-friendly
+PAGE_SIZE = 25   # mobile friendly
 
 HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MissAV Viewer</title>
+<title>MissAV · JAV.guru</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-:root {{
-  --bg:#0f1117;
-  --card:#151820;
-  --muted:#9aa4b2;
-  --accent:#4da3ff;
-}}
+:root {
+  --bg:#0b0f17;
+  --card:#111827;
+  --muted:#93a4b8;
+  --accent:#a78bfa;
+}
 
-* {{ box-sizing:border-box; }}
+* { box-sizing:border-box; }
 
-body {{
+body {
   margin:0;
   background:var(--bg);
   color:#fff;
   font-family:system-ui,sans-serif;
   padding:12px;
-}}
+}
 
-h1 {{
+h1 {
   font-size:20px;
   margin:6px 0 10px;
-}}
+}
 
-input {{
+input {
   width:100%;
   padding:12px;
   border-radius:8px;
@@ -48,47 +49,41 @@ input {{
   color:#fff;
   margin-bottom:12px;
   font-size:16px;
-}}
+}
 
-.stats {{
+.stats {
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:8px;
   margin-bottom:12px;
-}}
+}
 
-.stat {{
+.stat {
   background:var(--card);
   padding:10px;
   border-radius:8px;
   font-size:13px;
-}}
+}
 
-.stat b {{
+.stat b {
   display:block;
   font-size:18px;
-}}
+}
 
-.video {{
+.video {
   background:var(--card);
   border-radius:10px;
   padding:12px;
   margin-bottom:12px;
-}}
+}
 
-.code {{
+.code {
   font-weight:700;
   font-size:16px;
   margin-bottom:6px;
-}}
+}
 
-.tags {{
-  font-size:12px;
-  color:var(--muted);
-  margin-bottom:6px;
-}}
-
-.links a {{
+.links a {
   display:inline-block;
   margin:4px 6px 4px 0;
   padding:6px 10px;
@@ -97,76 +92,65 @@ input {{
   font-size:12px;
   color:var(--accent);
   text-decoration:none;
-}}
+  cursor:pointer;
+}
 
-video {{
+video {
   width:100%;
   margin-top:8px;
   border-radius:8px;
   display:none;
-}}
+}
 
-.pagination {{
+.pagination {
   display:flex;
   flex-wrap:wrap;
   justify-content:center;
   gap:6px;
   margin:16px 0;
-}}
+}
 
-button {{
+button {
   background:#1c1f26;
   color:#fff;
   border:none;
   padding:8px 12px;
   border-radius:6px;
-  font-size:14px;
-}}
+}
 
-button.active {{
+button.active {
   background:var(--accent);
-}}
+}
 </style>
 </head>
 
 <body>
 
-<h1>MissAV Viewer</h1>
-
-<input id="filter" placeholder="Search video code / source / quality">
+<h1>🎬 MissAV</h1>
+<input id="filter" placeholder="Search code / source / quality">
 
 <div class="stats" id="stats"></div>
 <div id="container"></div>
 <div class="pagination" id="pagination"></div>
 
 <script>
-const DATA = {data};
-const STATS = {stats};
-const PAGE_SIZE = {page_size};
+const DATA = __DATA__;
+const STATS = __STATS__;
+const PAGE_SIZE = __PAGE_SIZE__;
 let page = 1;
 
-function getParams() {{
-  return new URLSearchParams(location.search);
-}}
-
-function applyDeepLink() {{
-  const p = getParams();
-  if (p.get("code")) filter.value = p.get("code");
-  if (p.get("source")) filter.value = p.get("source");
-}}
-
-function renderStats(filtered) {{
-  const el = document.getElementById("stats");
-  el.innerHTML = `
+function renderStats(filtered) {
+  stats.innerHTML = `
     <div class="stat"><b>${filtered.length}</b>Videos</div>
     <div class="stat"><b>${STATS.total_streams}</b>Streams</div>
-    <div class="stat"><b>${STATS.qualities.join(", ")}</b>Qualities</div>
     <div class="stat"><b>${STATS.sources.join(", ")}</b>Sources</div>
+    <div class="stat"><b>${STATS.qualities.join(", ")}</b>Qualities</div>
   `;
-}}
+}
 
-function render() {{
+function render() {
   const q = filter.value.toLowerCase();
+
   let filtered = DATA.filter(v =>
     v.code.includes(q) ||
     v.entries.some(e =>
@@ -184,7 +168,7 @@ function render() {{
 
   container.innerHTML = "";
 
-  slice.forEach(v => {{
+  slice.forEach(v => {
     const d = document.createElement("div");
     d.className = "video";
 
@@ -194,44 +178,42 @@ function render() {{
 
     d.innerHTML = `
       <div class="code">${v.code}</div>
-      <div class="tags">${v.entries.length} streams</div>
       <div class="links">${links}</div>
       <video controls></video>
     `;
     container.appendChild(d);
-  }});
+  });
 
   renderPagination(pages);
-}}
+}
 
-function renderPagination(pages) {{
+function renderPagination(pages) {
   pagination.innerHTML = "";
-  for (let i=1;i<=pages;i++) {{
+  for (let i=1;i<=pages;i++) {
     const b = document.createElement("button");
     b.textContent = i;
     if (i===page) b.className="active";
-    b.onclick = () => {{ page=i; render(); }};
+    b.onclick = () => { page=i; render(); };
     pagination.appendChild(b);
-  }}
-}}
+  }
+}
 
-function play(el,url) {{
+function play(el,url) {
   document.querySelectorAll("video").forEach(v => v.style.display="none");
   const v = el.closest(".video").querySelector("video");
   v.style.display="block";
 
-  if (Hls.isSupported()) {{
+  if (Hls.isSupported()) {
     const hls = new Hls();
     hls.loadSource(url);
     hls.attachMedia(v);
-  }} else {{
+  } else {
     v.src = url;
-  }}
+  }
   v.play();
-}}
+}
 
-filter.oninput = () => {{ page=1; render(); }};
-applyDeepLink();
+filter.oninput = () => { page=1; render(); };
 render();
 </script>
 
@@ -239,8 +221,10 @@ render();
 </html>
 """
 
-
 def generate():
+    if not Path(INPUT_CSV).exists():
+        raise SystemExit(f"Missing input CSV: {INPUT_CSV}")
+
     grouped = defaultdict(list)
     qualities = Counter()
     sources = Counter()
@@ -256,7 +240,7 @@ def generate():
             sources[r["source"]] += 1
 
     data = [
-        {"code": k.lower(), "entries": v}
+        {"code": k, "entries": v}
         for k, v in sorted(grouped.items())
     ]
 
@@ -266,17 +250,17 @@ def generate():
         "sources": sorted(sources),
     }
 
+    html = HTML
+    html = html.replace("__DATA__", json.dumps(data, ensure_ascii=False))
+    html = html.replace("__STATS__", json.dumps(stats, ensure_ascii=False))
+    html = html.replace("__PAGE_SIZE__", str(PAGE_SIZE))
+
     Path(OUTPUT_HTML).parent.mkdir(parents=True, exist_ok=True)
 
     with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
-        f.write(HTML.format(
-            data=json.dumps(data),
-            stats=json.dumps(stats),
-            page_size=PAGE_SIZE,
-        ))
+        f.write(html)
 
-    print(f"[✓] Mobile UI generated → {OUTPUT_HTML}")
-
+    print(f"[✓] MissAV UI generated → {OUTPUT_HTML}")
 
 if __name__ == "__main__":
     generate()
