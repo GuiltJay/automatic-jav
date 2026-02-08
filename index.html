@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JAV · Data Hub</title>
+
+  <style>
+    :root {
+      --bg:#0b0f17;
+      --card:#111827;
+      --line:rgba(255,255,255,.12);
+      --text:#e5eefc;
+      --muted:#93a4b8;
+      --accent:#60a5fa;
+      --accent2:#22c55e;
+      --accent3:#f59e0b;
+      --accent4:#a78bfa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(1200px 700px at 20% 0%, rgba(96,165,250,0.15), transparent 60%),
+        radial-gradient(900px 600px at 80% 10%, rgba(34,197,94,0.12), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wrap {
+      max-width: 900px;
+      width: 100%;
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 28px;
+      letter-spacing: .3px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: rgba(17,24,39,.85);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 26px 20px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+    }
+
+    .icon {
+      font-size: 36px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .home { border-color: rgba(96,165,250,.6); }
+    .home:hover { border-color: var(--accent); }
+
+    .missav { border-color: rgba(167,139,250,.6); }
+    .missav:hover { border-color: var(--accent4); }
+
+    .codes { border-color: rgba(34,197,94,.6); }
+    .codes:hover { border-color: var(--accent2); }
+
+    .map { border-color: rgba(245,158,11,.6); }
+    .map:hover { border-color: var(--accent3); }
+
+    footer {
+      margin-top: 26px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>📊 JAV.guru Data Hub</h1>
+    <div class="subtitle">Static index</div>
+
+    <div class="grid">
+
+      <!-- Home -->
+      <a class="card home" href="home.html">
+        <div class="icon">🏠</div>
+        <div class="title">Home</div>
+        <div class="desc">
+          Browse the main dataset and latest generated content.
+        </div>
+      </a>
+
+      <!-- MissAV -->
+      <a class="card missav" href="missav.html">
+        <div class="icon">🎬</div>
+        <div class="title">MissAV</div>
+        <div class="desc">
+          View MissAV playlists, qualities, and sources.
+        </div>
+      </a>
+
+      <!-- Codes -->
+      <a class="card codes" href="codes.html">
+        <div class="icon">🏷️</div>
+        <div class="title">Codes</div>
+        <div class="desc">
+          View all extracted content codes in one place.
+        </div>
+      </a>
+
+      <!-- Sitemap -->
+      <a class="card map" href="sitemap.html">
+        <div class="icon">🗺️</div>
+        <div class="title">Sitemap</div>
+        <div class="desc">
+          Browse all raw CSV files and dataset snapshots.
+        </div>
+      </a>
+
+    </div>
+
+    <footer>
+      Hosted on GitHub Pages
+    </footer>
+  </div>
+</body>
+</html>
