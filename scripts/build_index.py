@@ -281,7 +281,7 @@ footer {{
 
 <script>
 const ITEMS_PER_PAGE = {ITEMS_PER_PAGE};
-const IMAGE_PROXY = "https://proxy.mrspidyxd.workers.dev/?url=";
+const IMAGE_PROXY = "https://imgproxy.mrspidyxd.workers.dev/?url=";
 const allItems = {js_items};
 
 let filtered = allItems.slice();
