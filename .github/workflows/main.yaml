@@ -47,7 +47,7 @@ jobs:
             -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
             -v "${GITHUB_WORKSPACE}/results:/app/results" \
             scraper-pipeline \
-            python scripts/missav.py
+            bash missav_pipeline.sh
 
       # -------------------------
       # DEBUG
