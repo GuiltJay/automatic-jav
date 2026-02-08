@@ -28,7 +28,7 @@ jobs:
           docker run --rm \
             -v "${GITHUB_WORKSPACE}/results:/app/results" \
             missav-pipeline \
-            python scripts/missav.py
+            bash missav_pipeline.sh
 
       # ---------- DEBUG ----------
       - name: Show results
