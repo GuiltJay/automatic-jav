@@ -27,6 +27,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}/results:/app/results" \
+            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
             missav-pipeline \
             bash missav_pipeline.sh
 
