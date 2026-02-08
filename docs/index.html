@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JAV.guru · Data Hub</title>
+  <title>JAV · Data Hub</title>
 
   <style>
     :root {
@@ -15,6 +15,7 @@
       --accent:#60a5fa;
       --accent2:#22c55e;
       --accent3:#f59e0b;
+      --accent4:#a78bfa;
     }
 
     * { box-sizing: border-box; }
@@ -96,6 +97,9 @@
     .home { border-color: rgba(96,165,250,.6); }
     .home:hover { border-color: var(--accent); }
 
+    .missav { border-color: rgba(167,139,250,.6); }
+    .missav:hover { border-color: var(--accent4); }
+
     .codes { border-color: rgba(34,197,94,.6); }
     .codes:hover { border-color: var(--accent2); }
 
@@ -117,6 +121,7 @@
 
     <div class="grid">
 
+      <!-- Home -->
       <a class="card home" href="home.html">
         <div class="icon">🏠</div>
         <div class="title">Home</div>
@@ -125,6 +130,16 @@
         </div>
       </a>
 
+      <!-- MissAV -->
+      <a class="card missav" href="missav.html">
+        <div class="icon">🎬</div>
+        <div class="title">MissAV</div>
+        <div class="desc">
+          View MissAV playlists, qualities, and sources.
+        </div>
+      </a>
+
+      <!-- Codes -->
       <a class="card codes" href="codes.html">
         <div class="icon">🏷️</div>
         <div class="title">Codes</div>
@@ -133,6 +148,7 @@
         </div>
       </a>
 
+      <!-- Sitemap -->
       <a class="card map" href="sitemap.html">
         <div class="icon">🗺️</div>
         <div class="title">Sitemap</div>
