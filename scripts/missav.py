@@ -17,10 +17,32 @@ from datetime import datetime
 
 CATEGORIES = [
     "https://missav123.com/dm291/en/today-hot",
+    "https://missav123.com/dm23/en/siro",
+    "https://missav123.com/dm515/en/new",
+    "https://missav123.com/dm1/en/english-subtitle",
+    "https://missav123.com/dm150/en/fc2",
+    "https://missav123.com/dm3461120/en/caribbeancom",
+    "https://missav123.com/dm628/en/uncensored-leak",
+    "https://missav123.com/dm263/en/monthly-hot",
+    "https://missav123.com/dm257/en/makers/Hunter",
+    "https://missav123.com/dm265/en/makers/Madonna",
+    "https://missav123.com/dm151/en/makers/Wanz%20Factory",
+    "https://missav123.com/dm820/en/makers/Moody%27s",
+    "https://missav123.com/dm66/en/makers/Prestige",
+    "https://missav123.com/en/makers/Glory%20Quest",
+    "https://missav123.com/dm506/en/makers/Attackers",
+    "https://missav123.com/dm183/en/makers/S1",
+    "https://missav123.com/dm737/en/makers/Premium",
+    "https://missav123.com/dm4420/en/genres/High%20School%20Girl",
+    "https://missav123.com/dm114/en/genres/Big%20Breasts",
+    "https://missav123.com/dm68/en/genres/Wife",
+    "https://missav123.com/dm434/en/genres/Pretty%20Girl",
+    "https://missav123.com/dm143/en/genres/Humiliation",
+    
     # add more categories here
 ]
 
-MAX_PAGES = 10              # pagination depth per category
+MAX_PAGES = 10             # pagination depth per category
 PAGE_CONCURRENCY = 6        # concurrent listing pages
 POST_CONCURRENCY = 12       # concurrent post pages
 
