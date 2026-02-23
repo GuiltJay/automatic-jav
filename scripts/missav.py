@@ -264,6 +264,7 @@ async def collect_all_posts(fetcher: Fetcher) -> List[str]:
 
     for cat in CATEGORIES:
         posts = await collect_posts_for_category(cat, fetcher, page_sem)
+        print(posts)
         all_posts.update(posts)
 
     return sorted(all_posts)
