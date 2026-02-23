@@ -56,8 +56,8 @@ OUTPUT_RAW_CODE_FILE = os.path.join(OUTPUT_DIR, "codes.txt")
 
 with open(OUTPUT_RAW_CODE_FILE, "r", encoding="utf-8") as rc:
     base = "https://missav123.com/dm291/en/"
-    codes = [base + line.strip() for line in rc if line.strip()] 
-    CATEGORIES += codes
+    guru_codes = [base + line.strip() for line in rc if line.strip()] 
+
 
 
 # =========================
@@ -261,12 +261,13 @@ async def collect_posts_for_category(
 async def collect_all_posts(fetcher: Fetcher) -> List[str]:
     page_sem = asyncio.Semaphore(PAGE_CONCURRENCY)
     all_posts = set()
+    all_posts.update(guru_codes)
+    
 
     for cat in CATEGORIES:
         posts = await collect_posts_for_category(cat, fetcher, page_sem)
-        print(posts)
         all_posts.update(posts)
-
+        
     return sorted(all_posts)
 
 # =========================
