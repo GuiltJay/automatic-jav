@@ -231,7 +231,7 @@ def generate():
 
     with open(INPUT_CSV, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f):
-            grouped[r["video_code"]].append({
+            grouped[r["page_url"]].append({
                 "url": r["playlist_url"],
                 "quality": r["quality"],
                 "source": r["source"],
