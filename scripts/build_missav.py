@@ -6,7 +6,7 @@ from pathlib import Path
 
 INPUT_CSV = "results/processed/missav.csv"
 OUTPUT_HTML = "docs/missav.html"
-OUTPUT_JSON = ""docs/missav.json"
+OUTPUT_JSON = "docs/missav.json"
 
 HTML = """<!DOCTYPE html>
 <html lang="en">
