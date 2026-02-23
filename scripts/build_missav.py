@@ -6,7 +6,7 @@ from pathlib import Path
 
 INPUT_CSV = "results/processed/missav.csv"
 OUTPUT_HTML = "docs/missav.html"
-PAGE_SIZE = 25   # mobile friendly
+OUTPUT_JSON = ""docs/missav.json"
 
 HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -14,253 +14,286 @@ HTML = """<!DOCTYPE html>
 <meta charset="utf-8">
 <title>MissAV · JAV.guru</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
 :root {
-  --bg:#0b0f17;
-  --card:#111827;
-  --muted:#93a4b8;
-  --accent:#a78bfa;
+  --bg:#0b1220;
+  --card:#111a2e;
+  --accent:#8b5cf6;
+  --pill:#1e293b;
 }
-
-* { box-sizing:border-box; }
 
 body {
   margin:0;
+  font-family:system-ui;
   background:var(--bg);
-  color:#fff;
-  font-family:system-ui,sans-serif;
+  color:white;
   padding:12px;
 }
 
-h1 {
-  font-size:20px;
-  margin:6px 0 10px;
-}
-
-input {
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:none;
-  background:#1c1f26;
-  color:#fff;
-  margin-bottom:12px;
-  font-size:16px;
-}
-
-.stats {
+/* GRID */
+#container {
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin-bottom:12px;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
 }
 
-.stat {
+@media(min-width:768px){
+  #container { grid-template-columns:repeat(4,1fr); }
+}
+
+@media(min-width:1200px){
+  #container { grid-template-columns:repeat(6,1fr); }
+}
+
+.video-card {
   background:var(--card);
+  border-radius:14px;
   padding:10px;
-  border-radius:8px;
-  font-size:13px;
 }
 
-.stat b {
-  display:block;
-  font-size:18px;
-}
-
-.video {
-  background:var(--card);
+.video-card img {
+  width:100%;
   border-radius:10px;
-  padding:12px;
-  margin-bottom:12px;
 }
 
 .code {
   font-weight:700;
-  font-size:16px;
-  margin-bottom:6px;
+  margin:6px 0;
+  font-size:14px;
 }
 
-.links a {
-  display:inline-block;
-  margin:4px 6px 4px 0;
-  padding:6px 10px;
-  background:#1c1f26;
-  border-radius:20px;
-  font-size:12px;
-  color:var(--accent);
-  text-decoration:none;
+.pills {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.pill {
+  background:var(--pill);
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:11px;
   cursor:pointer;
 }
 
+.pill:hover { background:var(--accent); }
+
 video {
   width:100%;
+  border-radius:10px;
   margin-top:8px;
-  border-radius:8px;
+}
+
+/* STICKY MINI PLAYER */
+#miniPlayer {
+  position:fixed;
+  bottom:15px;
+  right:15px;
+  width:240px;
   display:none;
+  background:#000;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 0 20px rgba(0,0,0,0.6);
+  z-index:999;
 }
 
-.pagination {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:6px;
-  margin:16px 0;
-}
-
-button {
-  background:#1c1f26;
-  color:#fff;
-  border:none;
-  padding:8px 12px;
-  border-radius:6px;
-}
-
-button.active {
-  background:var(--accent);
+#miniPlayer video {
+  width:100%;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🎬 MissAV</h1>
-<input id="filter" placeholder="Search code / source / quality">
+<h2>🎬 MissAV</h2>
+<input id="filter" placeholder="Search..." style="width:100%;padding:10px;margin-bottom:12px;">
 
-<div class="stats" id="stats"></div>
 <div id="container"></div>
-<div class="pagination" id="pagination"></div>
+<div id="miniPlayer"><video controls></video></div>
 
 <script>
-const DATA = __DATA__;
-const STATS = __STATS__;
-const PAGE_SIZE = __PAGE_SIZE__;
-let page = 1;
 
-function renderStats(filtered) {
-  stats.innerHTML = `
-    <div class="stat"><b>${filtered.length}</b>Videos</div>
-    <div class="stat"><b>${STATS.total_streams}</b>Streams</div>
-    <div class="stat"><b>${STATS.sources.join(", ")}</b>Sources</div>
-    <div class="stat"><b>${STATS.qualities.join(", ")}</b>Qualities</div>
-  `;
-}
+let DATA = [];
+let activePlayer = null;
+let activeCard = null;
 
-function render() {
-  const q = filter.value.toLowerCase();
-
-  let filtered = DATA.filter(v =>
-    v.code.includes(q) ||
-    v.entries.some(e =>
-      e.source.includes(q) || e.quality.includes(q)
-    )
-  );
-
-  renderStats(filtered);
-
-  const pages = Math.ceil(filtered.length / PAGE_SIZE);
-  page = Math.min(page, pages) || 1;
-
-  const start = (page - 1) * PAGE_SIZE;
-  const slice = filtered.slice(start, start + PAGE_SIZE);
-
-  container.innerHTML = "";
-
-  slice.forEach(v => {
-    const d = document.createElement("div");
-    d.className = "video";
-
-    const links = v.entries.map(e =>
-      `<a onclick="play(this,'${e.url}')">${e.quality} · ${e.source}</a>`
-    ).join("");
-
-    d.innerHTML = `
-      <div class="code">${v.code}</div>
-      <div class="links">${links}</div>
-      <video controls></video>
-    `;
-    container.appendChild(d);
+fetch("missav.json")
+  .then(r => r.json())
+  .then(data => {
+    DATA = data;
+    initVirtual();
   });
 
-  renderPagination(pages);
-}
+/* ------------------------
+   VIRTUAL SCROLL
+------------------------ */
 
-function renderPagination(pages) {
-  pagination.innerHTML = "";
-  for (let i=1;i<=pages;i++) {
-    const b = document.createElement("button");
-    b.textContent = i;
-    if (i===page) b.className="active";
-    b.onclick = () => { page=i; render(); };
-    pagination.appendChild(b);
+function initVirtual(){
+
+  const container = document.getElementById("container");
+  const rowHeight = 340; // approx card height
+  const buffer = 5;
+
+  let startIndex = 0;
+  let endIndex = 0;
+
+  function render(){
+
+    const q = filter.value.toLowerCase();
+    const filtered = DATA.filter(v =>
+      v.code.toLowerCase().includes(q)
+    );
+
+    const scrollTop = window.scrollY;
+    const screenHeight = window.innerHeight;
+
+    const itemsPerRow = getItemsPerRow();
+    const totalRows = Math.ceil(filtered.length / itemsPerRow);
+
+    const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
+    const endRow = Math.min(totalRows,
+      Math.ceil((scrollTop + screenHeight) / rowHeight) + buffer);
+
+    startIndex = startRow * itemsPerRow;
+    endIndex = Math.min(filtered.length, endRow * itemsPerRow);
+
+    container.innerHTML = "";
+
+    for(let i = startIndex; i < endIndex; i++){
+      renderCard(filtered[i]);
+    }
+
+    container.style.paddingTop = startRow * rowHeight + "px";
+    container.style.paddingBottom =
+      (totalRows - endRow) * rowHeight + "px";
   }
-}
 
-function play(el,url) {
-  document.querySelectorAll("video").forEach(v => v.style.display="none");
-  const v = el.closest(".video").querySelector("video");
-  v.style.display="block";
-
-  if (Hls.isSupported()) {
-    const hls = new Hls();
-    hls.loadSource(url);
-    hls.attachMedia(v);
-  } else {
-    v.src = url;
+  function getItemsPerRow(){
+    if(window.innerWidth >= 1200) return 6;
+    if(window.innerWidth >= 768) return 4;
+    return 2;
   }
-  v.play();
+
+  window.addEventListener("scroll", render);
+  window.addEventListener("resize", render);
+  filter.oninput = render;
+
+  render();
 }
 
-filter.oninput = () => { page=1; render(); };
-render();
+/* ------------------------
+   CARD RENDER
+------------------------ */
+
+function renderCard(v){
+
+  const thumb = `https://imgproxy.mrspidyxd.workers.dev/?url=https://fourhoi.com/${v.code}/cover-n.jpg`;
+  const preview = `https://fourhoi.com/${v.code}/preview.mp4`;
+
+  const card = document.createElement("div");
+  card.className = "video-card";
+
+  card.innerHTML = `
+    <img src="${thumb}" loading="lazy">
+    <div class="code">${v.code.toUpperCase()}</div>
+    <div class="pills">
+      <div class="pill preview">Preview</div>
+    </div>
+    <video controls style="display:none;"></video>
+  `;
+
+  const previewBtn = card.querySelector(".preview");
+  const player = card.querySelector("video");
+
+  previewBtn.onclick = () => {
+    activatePlayer(player, preview);
+  };
+
+  document.getElementById("container").appendChild(card);
+}
+
+/* ------------------------
+   PLAYER + STICKY
+------------------------ */
+
+function activatePlayer(player, url){
+
+  if(activePlayer && activePlayer !== player){
+    activePlayer.pause();
+  }
+
+  activePlayer = player;
+  activeCard = player.closest(".video-card");
+
+  player.style.display = "block";
+  player.src = url;
+  player.play().catch(()=>{});
+}
+
+/* Sticky logic */
+window.addEventListener("scroll", () => {
+
+  if(!activePlayer || !activeCard) return;
+
+  const rect = activeCard.getBoundingClientRect();
+
+  if(rect.bottom < 0 || rect.top > window.innerHeight){
+    const mini = document.getElementById("miniPlayer");
+    const miniVideo = mini.querySelector("video");
+
+    mini.style.display = "block";
+    miniVideo.src = activePlayer.src;
+    miniVideo.play().catch(()=>{});
+  }
+  else{
+    document.getElementById("miniPlayer").style.display = "none";
+  }
+});
+
 </script>
-
 </body>
 </html>
 """
 
+
 def generate():
-    if not Path(INPUT_CSV).exists():
-        raise SystemExit(f"Missing input CSV: {INPUT_CSV}")
 
-    grouped = defaultdict(list)
-    qualities = Counter()
-    sources = Counter()
+    grouped = defaultdict(lambda: {"code": "", "entries": []})
 
-    with open(INPUT_CSV, newline="", encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            grouped[r["page_url"]].append({
-                "url": r["playlist_url"],
-                "quality": r["quality"],
-                "source": r["source"],
+    with INPUT_CSV.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            page_url = r["page_url"].strip()
+            code = r["video_code"].strip()
+            playlist = r["playlist_url"].strip()
+            quality = r["quality"].strip()
+            source = r["source"].strip()
+
+            if not page_url or not playlist:
+                continue
+
+            grouped[page_url]["code"] = code
+            grouped[page_url]["entries"].append({
+                "quality": quality,
+                "source": source,
+                "url": playlist
             })
-            qualities[r["quality"]] += 1
-            sources[r["source"]] += 1
 
     data = [
-        {"code": k, "entries": v}
-        for k, v in sorted(grouped.items())
+        {"code": v["code"], "entries": v["entries"]}
+        for v in grouped.values()
     ]
 
-    stats = {
-        "total_streams": sum(qualities.values()),
-        "qualities": sorted(qualities),
-        "sources": sorted(sources),
-    }
+    # Compact JSON (CDN friendly)
+    OUTPUT_JSON.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
 
-    html = HTML
-    html = html.replace("__DATA__", json.dumps(data, ensure_ascii=False))
-    html = html.replace("__STATS__", json.dumps(stats, ensure_ascii=False))
-    html = html.replace("__PAGE_SIZE__", str(PAGE_SIZE))
+    OUTPUT_HTML.write_text(HTML, encoding="utf-8")
 
-    Path(OUTPUT_HTML).parent.mkdir(parents=True, exist_ok=True)
+    print("[✓] PRO build generated.")
 
-    with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
-        f.write(html)
-
-    print(f"[✓] MissAV UI generated → {OUTPUT_HTML}")
 
 if __name__ == "__main__":
     generate()
