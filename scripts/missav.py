@@ -15,6 +15,7 @@ from datetime import datetime
 # CONFIGURATION
 # =========================
 
+
 CATEGORIES = [
     "https://missav123.com/dm291/en/today-hot",
     "https://missav123.com/dm23/en/siro",
@@ -42,12 +43,22 @@ CATEGORIES = [
     # add more categories here
 ]
 
+    
+
 MAX_PAGES = 10             # pagination depth per category
 PAGE_CONCURRENCY = 6        # concurrent listing pages
 POST_CONCURRENCY = 12       # concurrent post pages
 
 RAW_DIR = "results/raw_missav"
 MASTER_CSV = "results/processed/missav.csv"
+OUTPUT_DIR = "docs"
+OUTPUT_RAW_CODE_FILE = os.path.join(OUTPUT_DIR, "codes.txt")
+
+with open(OUTPUT_RAW_CODE_FILE, "r", encoding="utf-8") as rc:
+    base = "https://missav123.com/dm291/en/"
+    codes = [base + line.strip() for line in rc if line.strip()] 
+    CATEGORIES += codes
+
 
 # =========================
 # HTTP FETCHER
