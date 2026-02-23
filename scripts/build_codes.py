@@ -12,6 +12,7 @@ RESULTS_DIR = "results/processed"
 INPUT_FILE = os.path.join(RESULTS_DIR, "combined.csv")
 OUTPUT_DIR = "docs"
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "codes.html")
+OUTPUT_RAW_CODE_FILE = os.path.join(OUTPUT_DIR, "codes.txt")
 
 PAGE_COL = "page_url"
 
@@ -195,6 +196,10 @@ def build():
         return
 
     html = build_html(codes)
+    with open(OUTPUT_RAW_CODE_FILE, "w", encoding="utf-8") as rc:
+        for code in codes:
+          rc.write(f"{code}\n")
+        
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(html)
 
