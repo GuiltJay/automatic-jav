@@ -263,7 +263,7 @@ def generate():
 
     grouped = defaultdict(lambda: {"code": "", "entries": []})
 
-    with INPUT_CSV.open(newline="", encoding="utf-8") as f:
+    with open(INPUT_CSV,newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for r in reader:
             page_url = r["page_url"].strip()
@@ -292,7 +292,7 @@ def generate():
 
     OUTPUT_HTML.write_text(HTML, encoding="utf-8")
 
-    print("[✓] PRO build generated.")
+    print("[✓] Missav Page build generated.")
 
 
 if __name__ == "__main__":
