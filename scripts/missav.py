@@ -54,9 +54,16 @@ MASTER_CSV = "results/processed/missav.csv"
 OUTPUT_DIR = "docs"
 OUTPUT_RAW_CODE_FILE = os.path.join(OUTPUT_DIR, "codes.txt")
 
+def minus_codes(path):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        return [item["code"] for item in data]
+
+
 with open(OUTPUT_RAW_CODE_FILE, "r", encoding="utf-8") as rc:
     base = "https://missav123.com/dm291/en/"
-    guru_codes = [base + line.strip() for line in rc if line.strip()] 
+    codes = minus_codes("docs/missav.json")
+    guru_codes = [base + line.strip() for line in rc if line.strip() and line.strip() not in codes] 
 
 
 
