@@ -1,12 +1,14 @@
-#!/usr/bin/env python3
 import csv
 import json
-from collections import defaultdict, Counter
+from collections import defaultdict
 from pathlib import Path
 
-INPUT_CSV = "results/processed/missav.csv"
-OUTPUT_HTML = "docs/missav.html"
-OUTPUT_JSON = "docs/missav.json"
+# =========================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+INPUT_CSV = BASE_DIR / "results/processed/missav.csv"
+OUTPUT_JSON = BASE_DIR / "docs/missav.json"
+OUTPUT_HTML = BASE_DIR / "docs/missav.html"
 
 HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -261,38 +263,64 @@ window.addEventListener("scroll", () => {
 
 def generate():
 
+    if not INPUT_CSV.exists():
+        print(f"[✗] CSV not found: {INPUT_CSV}")
+        return
+
     grouped = defaultdict(lambda: {"code": "", "entries": []})
 
-    with open(INPUT_CSV,newline="", encoding="utf-8") as f:
+    with INPUT_CSV.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
+
+        required = {"page_url", "video_code", "playlist_url", "quality", "source"}
+        if not required.issubset(reader.fieldnames or []):
+            print("[✗] CSV headers mismatch.")
+            print("Found:", reader.fieldnames)
+            return
+
         for r in reader:
-            page_url = r["page_url"].strip()
-            code = r["video_code"].strip()
-            playlist = r["playlist_url"].strip()
-            quality = r["quality"].strip()
-            source = r["source"].strip()
+            page_url = (r.get("page_url") or "").strip()
+            code = (r.get("video_code") or "").strip()
+            playlist = (r.get("playlist_url") or "").strip()
+            quality = (r.get("quality") or "").strip()
+            source = (r.get("source") or "").strip()
 
             if not page_url or not playlist:
                 continue
 
             grouped[page_url]["code"] = code
-            grouped[page_url]["entries"].append({
+
+            entry = {
                 "quality": quality,
                 "source": source,
                 "url": playlist
-            })
+            }
+
+            if entry not in grouped[page_url]["entries"]:
+                grouped[page_url]["entries"].append(entry)
 
     data = [
         {"code": v["code"], "entries": v["entries"]}
         for v in grouped.values()
     ]
 
-    # Compact JSON (CDN friendly)
-    OUTPUT_JSON.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+    # Ensure output folders exist (IMPORTANT for CI)
+    OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
 
+    # Write compact JSON
+    OUTPUT_JSON.write_text(
+        json.dumps(data, separators=(",", ":")),
+        encoding="utf-8"
+    )
+
+    # Write HTML
     OUTPUT_HTML.write_text(HTML, encoding="utf-8")
 
-    print("[✓] Missav Page build generated.")
+    print(f"[✓] Missav Page build generated.")
+    print(f"Videos: {len(data)}")
+    print(f"JSON: {OUTPUT_JSON}")
+    print(f"HTML: {OUTPUT_HTML}")
 
 
 if __name__ == "__main__":
