@@ -46,8 +46,8 @@ CATEGORIES = [
     
 
 MAX_PAGES = 10             # pagination depth per category
-PAGE_CONCURRENCY = 6        # concurrent listing pages
-POST_CONCURRENCY = 12       # concurrent post pages
+PAGE_CONCURRENCY = 12       # concurrent listing pages
+POST_CONCURRENCY = 20      # concurrent post pages
 
 RAW_DIR = "results/raw_missav"
 MASTER_CSV = "results/processed/missav.csv"
@@ -276,6 +276,7 @@ async def collect_all_posts(fetcher: Fetcher) -> List[str]:
 
 async def process_post(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
     async with sem:
+        print(f"Processing Post: {url}")
         html = await fetcher.fetch(url)
         if not html:
             return None
