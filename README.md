@@ -6,9 +6,10 @@ A fully automated **web scraping, data processing, and static site generation** 
 
 ## Features
 
-- **Multi-source scraping**: JAV.guru (async + Cloudflare bypass), MissAV (category + code-based), OneJAV (torrent aggregation)
+- **Multi-source scraping**: JAV.guru (async + Cloudflare bypass), MissAV (category + code-based), OneJAV (torrent aggregation), JavCT (amateur & uncensored)
 - **HLS stream extraction**: Decodes obfuscated JavaScript (`p,a,c,k,e,d` packer) to extract M3U8 playlist URLs
-- **Cross-pipeline integration**: JAV.guru codes are automatically looked up on MissAV for stream matching
+- **Unified Models Gallery**: Aggregates model profiles and links from JavCT and OneJAV into a single searchable directory
+- **Cross-pipeline integration**: JAV.guru codes are automatically looked up on MissAV and JavCT for stream matching
 - **Smart deduplication**: Already-processed codes are skipped using `missav.json` as source of truth (case-insensitive)
 - **Source tagging**: Each MissAV entry is tagged as `jav.guru` or `category` based on origin
 - **Inline video player**: HLS.js-powered playback with quality selection (1080p/720p/480p) on both Home and MissAV pages
@@ -27,6 +28,7 @@ A fully automated **web scraping, data processing, and static site generation** 
 ├── run_pipeline.sh            # JAV.guru pipeline orchestrator
 ├── missav_pipeline.sh         # MissAV pipeline orchestrator
 ├── onejav_pipeline.sh         # OneJAV pipeline orchestrator
+├── javct_pipeline.sh          # JavCT pipeline orchestrator
 ├── requirements.txt           # Python dependencies
 │
 ├── scripts/
@@ -39,7 +41,10 @@ A fully automated **web scraping, data processing, and static site generation** 
 │   ├── build_sitemap.py       # Generates sitemap.html
 │   ├── build_missav.py        # Generates missav.html + missav.json (with source tags)
 │   ├── onejav.py              # OneJAV scraper (cloudscraper, torrent aggregation)
-│   └── build_onejav.py        # Generates onejav.html + onejav.json (with source tags)
+│   ├── build_onejav.py        # Generates onejav.html + onejav.json (with source tags)
+│   ├── javct.py               # JavCT scraper (amateur, uncensored, categories, models)
+│   ├── build_javct.py         # Generates javct.html + javct.json (with source tags)
+│   └── build_models.py        # Generates models.html + models.json (JavCT & OneJAV sources)
 │
 ├── docs/                      # GitHub Pages output
 │   ├── index.html             # Landing page with navigation
@@ -50,21 +55,30 @@ A fully automated **web scraping, data processing, and static site generation** 
 │   ├── missav.html            # MissAV video browser + HLS player
 │   ├── missav.json            # MissAV data feed (structured, tagged)
 │   ├── onejav.html            # OneJAV torrent browser
-│   └── onejav.json            # OneJAV data feed (structured, tagged)
+│   ├── onejav.json            # OneJAV data feed (structured, tagged)
+│   ├── javct.html             # JavCT video browser
+│   ├── javct.json             # JavCT data feed (structured, tagged)
+│   ├── models.html            # Unified Models Gallery
+│   └── models.json            # Unified Models data feed
 │
-├── results/
+├── results/                   # Intermediate data outputs
 │   ├── raw/                   # Daily JAV.guru CSV snapshots
 │   ├── raw_missav/            # Daily MissAV CSV + JSON snapshots
 │   ├── raw_onejav/            # Daily OneJAV CSV + JSON snapshots
+│   ├── raw_javct/             # Daily JavCT CSV snapshots (videos, categories, models)
 │   └── processed/
 │       ├── combined.csv       # Deduplicated JAV.guru master dataset
 │       ├── missav.csv         # Deduplicated MissAV master dataset
-│       └── onejav.csv         # Deduplicated OneJAV master dataset
+│       ├── onejav.csv         # Deduplicated OneJAV master dataset
+│       ├── javct.csv          # Deduplicated JavCT video master dataset
+│       └── javct_models.csv   # Deduplicated JavCT model master dataset
 │
 └── .github/workflows/
-    ├── main.yaml              # Combined daily pipeline (JAV + MissAV)
+    ├── main.yaml              # Combined daily pipeline (JAV + MissAV + OneJAV + JavCT)
     ├── jav.yaml               # Standalone JAV.guru pipeline (manual)
-    └── missav.yml             # Standalone MissAV pipeline (manual)
+    ├── missav.yml             # Standalone MissAV pipeline (manual)
+    ├── onejav.yml             # Standalone OneJAV pipeline (manual)
+    └── javct.yml              # Standalone JavCT pipeline (manual)
 ```
 
 ---
@@ -99,6 +113,18 @@ onejav.py           → results/raw_onejav/onejav_YYYY-MM-DD.csv/.json
                     → results/processed/onejav.csv
        │
 build_onejav.py     → docs/onejav.html + docs/onejav.json  (tagged: jav.guru / new)
+```
+
+### JavCT Pipeline (`javct_pipeline.sh`)
+
+```
+javct.py            → results/raw_javct/videos/*.csv
+                    → results/raw_javct/models/*.csv
+                    → results/processed/javct.csv
+                    → results/processed/javct_models.csv
+       │
+build_javct.py      → docs/javct.html + docs/javct.json
+build_models.py     → docs/models.html + docs/models.json (aggregates from OneJAV & JavCT)
 ```
 
 ### Cross-Pipeline Data Flow
@@ -152,6 +178,18 @@ Static navigation page with links to all sections.
 - Torrent download button per card
 - Search by code, actress, tag, or title
 
+### `javct.html` — JavCT Browser
+- Virtual scroll for JavCT video cards
+- Source tag on each card: **JAV.guru** (green) if code exists in `codes.txt`, otherwise **New**
+- Thumbnail with view counts
+- Watch Online button linking to source
+
+### `models.html` — Models Gallery
+- Unified interface for browsing JAV models and actresses
+- Aggregates model data from both JavCT and OneJAV pipelines
+- Displays thumbnails and total view counts where available
+- Links directly to model profiles
+
 ### `codes.html` — Code Index
 - Responsive grid of clickable code chips
 - Search and click-to-copy
@@ -182,7 +220,7 @@ Static navigation page with links to all sections.
 ### Run locally
 
 ```bash
-chmod +x run_pipeline.sh missav_pipeline.sh onejav_pipeline.sh
+chmod +x run_pipeline.sh missav_pipeline.sh onejav_pipeline.sh javct_pipeline.sh
 
 # JAV.guru pipeline
 ./run_pipeline.sh
@@ -192,6 +230,9 @@ chmod +x run_pipeline.sh missav_pipeline.sh onejav_pipeline.sh
 
 # OneJAV pipeline (independent, can run anytime)
 ./onejav_pipeline.sh
+
+# JavCT pipeline (independent, can run anytime)
+./javct_pipeline.sh
 ```
 
 ### Run via Docker
@@ -216,6 +257,12 @@ docker run --rm \
   -v "$(pwd)/docs:/app/docs" \
   -v "$(pwd)/results:/app/results" \
   scraper-pipeline bash onejav_pipeline.sh
+
+# JavCT pipeline
+docker run --rm \
+  -v "$(pwd)/docs:/app/docs" \
+  -v "$(pwd)/results:/app/results" \
+  scraper-pipeline bash javct_pipeline.sh
 ```
 
 ---
@@ -257,14 +304,16 @@ Site will be available at `https://<username>.github.io/<repo>/`
 | `missav.csv` | ~43,800 playlist entries |
 | `missav.json` | ~16,800 videos (tagged) |
 | `codes.txt` | ~15,700 unique codes |
-| `onejav.csv` | ~69 torrent entries (7-day rolling window) |
+| `onejav.csv` | ~240 torrent entries (20-day rolling window) |
+| `javct.csv` | ~150 uncensored & amateur video entries |
+| `javct_models.csv` | ~30 model profiles |
 
 ---
 
 ## TODO
 
-- [ ] **Add javct.com scraper** — New source for content scraping and stream extraction
-- [x] **Add onejav.com scraper** — Torrent/magnet link aggregation (done: scraper + build + pipeline)
+- [x] **Add javct.com scraper** — Scrape amateur, uncensored, categories, and models
+- [x] **Add onejav.com scraper** — Torrent aggregation (20 days, tags, popular)
 - [ ] Add `robots.txt` and `sitemap.xml` for SEO
 - [ ] Stats dashboard (growth over time, source breakdown)
 - [ ] CSV/JSON export from sitemap page
