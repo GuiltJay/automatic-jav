@@ -75,6 +75,12 @@ run_py "$SCRIPTS_DIR/build_codes.py"
 run_py "$SCRIPTS_DIR/build_sitemap.py"
 
 # ----------------------------------------
+# 6) Build SEO & Stats
+# ----------------------------------------
+run_py "$SCRIPTS_DIR/build_seo.py"
+run_py "$SCRIPTS_DIR/build_stats.py"
+
+# ----------------------------------------
 # Done
 # ----------------------------------------
 echo "========================================"
