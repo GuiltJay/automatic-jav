@@ -6,13 +6,11 @@ from datetime import datetime
 from html import escape
 from urllib.parse import urlsplit
 
-COMBINED_FILE = os.path.join("results", "processed", "combined.csv")
+RESULTS_DIR = os.path.join("results", "processed")
 DOCS_DIR = "docs"
 OUTPUT_FILE = os.path.join(DOCS_DIR, "sitemap.html")
 
-# Prefer deriving date from source_file like: jav_links_2025-12-28_181113.csv -> 2025-12-28
 SRC_DATE_RE = re.compile(r"jav_links_(\d{4}-\d{2}-\d{2})_\d{6}\.csv$", re.IGNORECASE)
-
 
 def date_from_source_file(source_file: str) -> str:
     if not source_file:
@@ -20,50 +18,66 @@ def date_from_source_file(source_file: str) -> str:
     m = SRC_DATE_RE.search(source_file.strip())
     return m.group(1) if m else ""
 
-
 def host_from_url(url: str) -> str:
     try:
         return (urlsplit(url).netloc or "").lower()
     except Exception:
         return ""
 
-
 def load_rows():
-    if not os.path.isfile(COMBINED_FILE):
-        print(f"❌ Missing combined file: {COMBINED_FILE}")
-        return []
-
+    urls = set()
     rows = []
-    with open(COMBINED_FILE, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        if not reader.fieldnames:
-            print("❌ combined.csv has no headers")
-            return []
-        if "page_url" not in reader.fieldnames:
-            print("❌ combined.csv must have page_url")
-            return []
+    
+    def add_row(url, date_added):
+        if not url or url in urls:
+            return
+        urls.add(url)
+        rows.append({
+            "page_url": url,
+            "date_added": date_added,
+            "host": host_from_url(url)
+        })
 
-        has_source = "source_file" in reader.fieldnames
-        has_date_added = "date_added" in reader.fieldnames
+    # 1. JAV.guru
+    comb_path = os.path.join(RESULTS_DIR, "combined.csv")
+    if os.path.isfile(comb_path):
+        with open(comb_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            has_source = "source_file" in reader.fieldnames
+            has_date_added = "date_added" in reader.fieldnames
+            
+            for r in reader:
+                url = (r.get("page_url") or "").strip()
+                if not url:
+                    continue
+                d = (r.get("date_added") or "").strip() if has_date_added else ""
+                if not d and has_source:
+                    d = date_from_source_file((r.get("source_file") or "").strip())
+                add_row(url, d)
 
-        for row in reader:
-            page_url = (row.get("page_url") or "").strip()
-            if not page_url:
-                continue
+    # 2. MissAV
+    missav_path = os.path.join(RESULTS_DIR, "missav.csv")
+    if os.path.isfile(missav_path):
+        with open(missav_path, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                add_row(r.get("page_url", "").strip(), "")
+                
+    # 3. OneJAV
+    onejav_path = os.path.join(RESULTS_DIR, "onejav.csv")
+    if os.path.isfile(onejav_path):
+        with open(onejav_path, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                add_row(r.get("page_url", "").strip(), r.get("date", "").strip())
+                
+    # 4. JavCT
+    javct_path = os.path.join(RESULTS_DIR, "javct.csv")
+    if os.path.isfile(javct_path):
+        with open(javct_path, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                add_row(r.get("page_url", "").strip(), r.get("date_scraped", "").strip())
 
-            # Prefer date_added column if present; else derive from source_file
-            date_added = (row.get("date_added") or "").strip() if has_date_added else ""
-            if not date_added and has_source:
-                date_added = date_from_source_file((row.get("source_file") or "").strip())
-
-            rows.append({
-                "page_url": page_url,
-                "date_added": date_added,
-                "host": host_from_url(page_url),
-            })
-
-    # newest-first by date_added (YYYY-MM-DD sorts lexicographically), then by URL
-    rows.sort(key=lambda r: (r["date_added"] or "", r["page_url"]), reverse=True)
+    # newest-first by date_added, then by URL
+    rows.sort(key=lambda x: (x["date_added"] or "", x["page_url"]), reverse=True)
     return rows
 
 
@@ -227,14 +241,16 @@ li:last-child {{ border-bottom:none; }}
 
 <nav>
   <a href="index.html">⬅ Index</a>
-  <a href="home.html">🏠 Home</a>
+  <a href="home.html">🏠 JAV.guru</a>
+  <a href="missav.html">🎬 MissAV</a>
+  <a href="onejav.html">🧲 OneJAV</a>
+  <a href="javct.html">🌟 JavCT</a>
   <a href="codes.html">🏷️ Codes</a>
-  <a href="sitemap.html">🗺️ Sitemap</a>
 </nav>
 
 <header>
   <h1>🗺️ Sitemap</h1>
-  <div class="meta">{len(rows)} links · Generated {escape(generated)}</div>
+  <div class="meta">{len(rows)} links from all sources · Generated {escape(generated)}</div>
 </header>
 
 <div class="card">
@@ -277,8 +293,6 @@ q.addEventListener('input', () => {{
 
     print(f"✅ Sitemap built: {OUTPUT_FILE}")
     print(f"   Links: {len(rows)}")
-    print(f"   Source: {COMBINED_FILE}")
-
 
 if __name__ == "__main__":
     build_sitemap()
