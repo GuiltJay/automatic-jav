@@ -33,7 +33,7 @@ A fully automated **web scraping, data processing, and static site generation** 
 │
 ├── scripts/
 │   ├── scraper.py             # Async JAV.guru scraper (crawl4ai + aiohttp)
-│   ├── passvie_scraper.py     # Legacy sync JAV.guru scraper (cloudscraper)
+│   ├── passive_scraper.py     # Legacy sync JAV.guru scraper (cloudscraper)
 │   ├── missav.py              # MissAV scraper + JS unpacker + M3U8 extractor
 │   ├── dupe_filter.py         # CSV deduplication and URL normalization
 │   ├── build_index.py         # Generates home.html (with MissAV stream pills)

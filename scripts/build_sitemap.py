@@ -43,8 +43,9 @@ def load_rows():
     if os.path.isfile(comb_path):
         with open(comb_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            has_source = "source_file" in reader.fieldnames
-            has_date_added = "date_added" in reader.fieldnames
+            fields = reader.fieldnames or []
+            has_source = "source_file" in fields
+            has_date_added = "date_added" in fields
             
             for r in reader:
                 url = (r.get("page_url") or "").strip()
@@ -88,6 +89,19 @@ def build_sitemap():
     if not rows:
         print("ℹ️ No rows found to build sitemap.")
         return
+
+    # Export CSV/JSON for download
+    sitemap_json = os.path.join(DOCS_DIR, "sitemap.json")
+    sitemap_csv = os.path.join(DOCS_DIR, "sitemap_export.csv")
+    
+    import json
+    with open(sitemap_json, "w", encoding="utf-8") as f:
+        json.dump(rows, f, indent=2)
+        
+    with open(sitemap_csv, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["page_url", "date_added", "host"])
+        writer.writeheader()
+        writer.writerows(rows)
 
     generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -257,6 +271,9 @@ li:last-child {{ border-bottom:none; }}
   <div class="controls">
     <input id="q" type="text" placeholder="Filter links..." autocomplete="off">
     <div class="chip" id="count">{len(rows)} items</div>
+    <div style="flex:1"></div>
+    <a href="sitemap_export.csv" download class="chip" style="color:var(--accent);border-color:var(--accent);text-decoration:none;">Download CSV</a>
+    <a href="sitemap.json" download class="chip" style="color:var(--accent);border-color:var(--accent);text-decoration:none;">Download JSON</a>
   </div>
 
   <ul id="list">
@@ -284,7 +301,24 @@ q.addEventListener('input', () => {{
   count.textContent = `${{shown}} items`;
 }});
 </script>
+
+<script>
+  (function(){{
+    const toggle = document.createElement('button');
+    toggle.innerHTML = '🌓';
+    toggle.title = 'Toggle Theme';
+    toggle.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--card, #fff);border:1px solid var(--border, #ccc);color:var(--text, #000);padding:10px;border-radius:50%;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;';
+    toggle.onclick = () => {{
+      const isLight = document.body.getAttribute('data-theme') === 'light';
+      document.body.setAttribute('data-theme', isLight ? 'dark' : 'light');
+      localStorage.setItem('theme', isLight ? 'dark' : 'light');
+    }};
+    document.body.appendChild(toggle);
+    if(localStorage.getItem('theme') === 'light') document.body.setAttribute('data-theme', 'light');
+  }})();
+</script>
 </body>
+
 </html>
 """
 

@@ -31,7 +31,22 @@ HTML = """\
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-*{ box-sizing:border-box; margin:0; padding:0; }
+
+[data-theme="light"] {
+  --bg:#f8fafc;
+  --surface:#ffffff;
+  --card:#ffffff;
+  --card-hover:#f1f5f9;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --text-dim:#64748b;
+  --line:rgba(0,0,0,0.1);
+  --pill:#e2e8f0;
+  --pill-hover:#cbd5e1;
+}
+* { box-sizing: border-box; }
+
+* { margin:0; padding:0; }
 
 :root {
   --bg:#0a0e1a;
@@ -544,7 +559,24 @@ function buildCard(v) {
 }
 
 </script>
+
+<script>
+  (function(){
+    const toggle = document.createElement('button');
+    toggle.innerHTML = '🌓';
+    toggle.title = 'Toggle Theme';
+    toggle.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--card, #fff);border:1px solid var(--border, #ccc);color:var(--text, #000);padding:10px;border-radius:50%;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;';
+    toggle.onclick = () => {
+      const isLight = document.body.getAttribute('data-theme') === 'light';
+      document.body.setAttribute('data-theme', isLight ? 'dark' : 'light');
+      localStorage.setItem('theme', isLight ? 'dark' : 'light');
+    };
+    document.body.appendChild(toggle);
+    if(localStorage.getItem('theme') === 'light') document.body.setAttribute('data-theme', 'light');
+  })();
+</script>
 </body>
+
 </html>
 """
 
