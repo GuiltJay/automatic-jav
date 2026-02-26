@@ -63,7 +63,9 @@ def minus_codes(path):
 with open(OUTPUT_RAW_CODE_FILE, "r", encoding="utf-8") as rc:
     base = "https://missav123.com/dm291/en/"
     codes = minus_codes("docs/missav.json")
-    guru_codes = [base + line.strip() for line in rc if line.strip() and line.strip() not in codes] 
+    print(f"Already Processed Codes: {len(codes)}")
+    guru_codes = [base + line.strip() for line in rc if line.strip() and line.strip() not in codes]
+    print(f"New Codes From Jav.Guru: {len(guru_codes)}")
 
 
 
@@ -275,6 +277,8 @@ async def collect_all_posts(fetcher: Fetcher) -> List[str]:
         posts = await collect_posts_for_category(cat, fetcher, page_sem)
         all_posts.update(posts)
         
+    print(f"Total Link To Be Processed: {len(all_posts)"})
+        
     return sorted(all_posts)
 
 # =========================
@@ -283,7 +287,6 @@ async def collect_all_posts(fetcher: Fetcher) -> List[str]:
 
 async def process_post(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
     async with sem:
-        print(f"Processing Post: {url}")
         html = await fetcher.fetch(url)
         if not html:
             return None
