@@ -7,253 +7,616 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 INPUT_CSV = BASE_DIR / "results/processed/missav.csv"
+CODES_TXT = BASE_DIR / "docs/codes.txt"
 OUTPUT_JSON = BASE_DIR / "docs/missav.json"
 OUTPUT_HTML = BASE_DIR / "docs/missav.html"
+
+
+def load_guru_codes() -> set[str]:
+    """Load JAV.guru codes (lowercased) from codes.txt."""
+    if not CODES_TXT.exists():
+        return set()
+    return {
+        line.strip().lower()
+        for line in CODES_TXT.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
 
 HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MissAV · JAV.guru</title>
+<title>MissAV · JAV.guru Data Hub</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
+*{ box-sizing:border-box; margin:0; padding:0; }
+
 :root {
-  --bg:#0b1220;
-  --card:#111a2e;
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --card:#1a2236;
+  --card-hover:#1f2a42;
+  --border:#2a3450;
   --accent:#8b5cf6;
+  --accent-hover:#7c3aed;
+  --green:#22c55e;
+  --blue:#3b82f6;
+  --orange:#f59e0b;
+  --red:#ef4444;
+  --text:#f1f5f9;
+  --text-dim:#94a3b8;
   --pill:#1e293b;
+  --pill-hover:#334155;
+  --radius:12px;
 }
 
 body {
-  margin:0;
-  font-family:system-ui;
-  background:var(--bg);
-  color:white;
-  padding:12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
 }
 
-/* GRID */
+/* ---- HEADER ---- */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.header h1 span { color: var(--accent); }
+
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box input:focus { border-color: var(--accent); }
+
+.search-box::before {
+  content: '\\1F50D';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.stats {
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.stats b { color: var(--accent); }
+
+/* ---- MAIN ---- */
+.main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 16px 20px;
+}
+
+/* ---- GRID ---- */
 #container {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
 }
 
-@media(min-width:768px){
-  #container { grid-template-columns:repeat(4,1fr); }
+@media(min-width:640px)  { #container { grid-template-columns: repeat(3, 1fr); } }
+@media(min-width:1024px) { #container { grid-template-columns: repeat(4, 1fr); } }
+@media(min-width:1400px) { #container { grid-template-columns: repeat(5, 1fr); } }
+
+/* ---- CARD ---- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s;
 }
 
-@media(min-width:1200px){
-  #container { grid-template-columns:repeat(6,1fr); }
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
 }
 
-.video-card {
-  background:var(--card);
-  border-radius:14px;
-  padding:10px;
+.card-thumb {
+  position: relative;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+  cursor: pointer;
+  background: #0d1117;
 }
 
-.video-card img {
-  width:100%;
-  border-radius:10px;
+.card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.2s;
 }
 
-.code {
-  font-weight:700;
-  margin:6px 0;
-  font-size:14px;
+.card-thumb:hover img { opacity: 0.7; }
+
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
 
+.card-thumb:hover .play-overlay { opacity: 1; }
+
+.play-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(139,92,246,0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-icon::after {
+  content: '';
+  border-style: solid;
+  border-width: 8px 0 8px 14px;
+  border-color: transparent transparent transparent white;
+  margin-left: 3px;
+}
+
+.card-body { padding: 10px 12px 12px; }
+
+.card-code {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* ---- PILLS ---- */
 .pills {
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .pill {
-  background:var(--pill);
-  padding:5px 10px;
-  border-radius:999px;
-  font-size:11px;
-  cursor:pointer;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s, filter 0.1s;
+  color: white;
 }
 
-.pill:hover { background:var(--accent); }
+.pill:hover { transform: scale(1.05); filter: brightness(1.2); }
+.pill:active { transform: scale(0.97); }
 
-video {
-  width:100%;
-  border-radius:10px;
-  margin-top:8px;
+.pill-preview  { background: var(--pill); color: var(--text-dim); }
+.pill-1080p    { background: var(--green); }
+.pill-720p     { background: var(--blue); }
+.pill-480p     { background: var(--orange); }
+.pill-playlist { background: var(--red); }
+.pill-other    { background: var(--pill); color: var(--text-dim); }
+
+.pill-active {
+  outline: 2px solid white;
+  outline-offset: 1px;
 }
 
-/* STICKY MINI PLAYER */
+/* ---- INLINE PLAYER ---- */
+.card-player {
+  display: none;
+  background: #000;
+}
+
+.card-player video {
+  width: 100%;
+  display: block;
+}
+
+.card-player.active { display: block; }
+
+/* ---- MINI PLAYER ---- */
 #miniPlayer {
-  position:fixed;
-  bottom:15px;
-  right:15px;
-  width:240px;
-  display:none;
-  background:#000;
-  border-radius:10px;
-  overflow:hidden;
-  box-shadow:0 0 20px rgba(0,0,0,0.6);
-  z-index:999;
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 320px;
+  display: none;
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  z-index: 1000;
+  border: 1px solid var(--border);
 }
 
-#miniPlayer video {
-  width:100%;
+#miniPlayer video { width: 100%; display: block; }
+
+#miniClose {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+/* ---- LOADING ---- */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+  font-size: 15px;
+}
+
+.loading::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 
 <body>
 
-<h2>🎬 MissAV</h2>
-<input id="filter" placeholder="Search..." style="width:100%;padding:10px;margin-bottom:12px;">
+<div class="header">
+  <div class="header-inner">
+    <h1><span>MissAV</span> · JAV.guru</h1>
+    <div class="search-box">
+      <input id="filter" placeholder="Search by code..." autocomplete="off">
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+</div>
 
-<div id="container"></div>
-<div id="miniPlayer"><video controls></video></div>
+<div class="main">
+  <div id="loading" class="loading">Loading data...</div>
+  <div id="container"></div>
+</div>
+
+<div id="miniPlayer">
+  <button id="miniClose">&times;</button>
+  <video controls></video>
+</div>
 
 <script>
 
 let DATA = [];
-let activePlayer = null;
+let activeHls = null;
+let activeVideo = null;
 let activeCard = null;
+let miniHls = null;
+let miniActive = false;
 
 fetch("missav.json")
   .then(r => r.json())
   .then(data => {
     DATA = data;
+    document.getElementById("loading").style.display = "none";
+    updateStats(data.length);
     initVirtual();
+  })
+  .catch(() => {
+    document.getElementById("loading").textContent = "Failed to load data.";
   });
 
-/* ------------------------
-   VIRTUAL SCROLL
------------------------- */
+function updateStats(shown) {
+  document.getElementById("stats").innerHTML =
+    `<b>${shown.toLocaleString()}</b> / ${DATA.length.toLocaleString()} videos`;
+}
 
-function initVirtual(){
+/* ---- VIRTUAL SCROLL ---- */
 
+function initVirtual() {
   const container = document.getElementById("container");
-  const rowHeight = 340; // approx card height
-  const buffer = 5;
+  const rowHeight = 360;
+  const buffer = 4;
+  let lastQ = "";
+  let filtered = DATA;
 
-  let startIndex = 0;
-  let endIndex = 0;
-
-  function render(){
-
-    const q = filter.value.toLowerCase();
-    const filtered = DATA.filter(v =>
-      v.code.toLowerCase().includes(q)
-    );
-
-    const scrollTop = window.scrollY;
-    const screenHeight = window.innerHeight;
-
-    const itemsPerRow = getItemsPerRow();
-    const totalRows = Math.ceil(filtered.length / itemsPerRow);
-
-    const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
-    const endRow = Math.min(totalRows,
-      Math.ceil((scrollTop + screenHeight) / rowHeight) + buffer);
-
-    startIndex = startRow * itemsPerRow;
-    endIndex = Math.min(filtered.length, endRow * itemsPerRow);
-
-    container.innerHTML = "";
-
-    for(let i = startIndex; i < endIndex; i++){
-      renderCard(filtered[i]);
+  function refilter() {
+    const q = document.getElementById("filter").value.toLowerCase().trim();
+    if (q !== lastQ) {
+      lastQ = q;
+      filtered = q ? DATA.filter(v => v.code.toLowerCase().includes(q)) : DATA;
+      updateStats(filtered.length);
     }
-
-    container.style.paddingTop = startRow * rowHeight + "px";
-    container.style.paddingBottom =
-      (totalRows - endRow) * rowHeight + "px";
+    return filtered;
   }
 
-  function getItemsPerRow(){
-    if(window.innerWidth >= 1200) return 6;
-    if(window.innerWidth >= 768) return 4;
+  function render() {
+    const items = refilter();
+    const scrollTop = window.scrollY;
+    const screenH = window.innerHeight;
+    const cols = getCols();
+    const totalRows = Math.ceil(items.length / cols);
+
+    const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
+    const endRow = Math.min(totalRows, Math.ceil((scrollTop + screenH) / rowHeight) + buffer);
+
+    const si = startRow * cols;
+    const ei = Math.min(items.length, endRow * cols);
+
+    container.innerHTML = "";
+    for (let i = si; i < ei; i++) {
+      container.appendChild(buildCard(items[i]));
+    }
+
+    container.style.paddingTop  = startRow * rowHeight + "px";
+    container.style.paddingBottom = Math.max(0, totalRows - endRow) * rowHeight + "px";
+  }
+
+  function getCols() {
+    const w = window.innerWidth;
+    if (w >= 1400) return 5;
+    if (w >= 1024) return 4;
+    if (w >= 640)  return 3;
     return 2;
   }
 
-  window.addEventListener("scroll", render);
-  window.addEventListener("resize", render);
-  filter.oninput = render;
+  let ticking = false;
+  function onScroll() {
+    if (!ticking) { ticking = true; requestAnimationFrame(() => { render(); ticking = false; }); }
+  }
 
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", render);
+  document.getElementById("filter").oninput = render;
   render();
 }
 
-/* ------------------------
-   CARD RENDER
------------------------- */
+/* ---- BUILD CARD ---- */
 
-function renderCard(v){
-
+function buildCard(v) {
   const thumb = `https://imgproxy.mrspidyxd.workers.dev/?url=https://fourhoi.com/${v.code}/cover-n.jpg`;
   const preview = `https://fourhoi.com/${v.code}/preview.mp4`;
 
   const card = document.createElement("div");
-  card.className = "video-card";
+  card.className = "card";
 
-  card.innerHTML = `
-    <img src="${thumb}" loading="lazy">
-    <div class="code">${v.code.toUpperCase()}</div>
-    <div class="pills">
-      <div class="pill preview">Preview</div>
-    </div>
-    <video controls style="display:none;"></video>
-  `;
+  // Thumbnail
+  const thumbDiv = document.createElement("div");
+  thumbDiv.className = "card-thumb";
+  thumbDiv.innerHTML = `<img src="${thumb}" loading="lazy" alt="${v.code}"><div class="play-overlay"><div class="play-icon"></div></div>`;
 
-  const previewBtn = card.querySelector(".preview");
-  const player = card.querySelector("video");
+  // Player area
+  const playerDiv = document.createElement("div");
+  playerDiv.className = "card-player";
+  const video = document.createElement("video");
+  video.controls = true;
+  video.playsInline = true;
+  video.preload = "none";
+  playerDiv.appendChild(video);
 
-  previewBtn.onclick = () => {
-    activatePlayer(player, preview);
+  // Body
+  const body = document.createElement("div");
+  body.className = "card-body";
+
+  const codeDiv = document.createElement("div");
+  codeDiv.className = "card-code";
+  codeDiv.textContent = v.code.toUpperCase();
+
+  // Pills
+  const pills = document.createElement("div");
+  pills.className = "pills";
+
+  // Preview pill
+  const prevPill = document.createElement("button");
+  prevPill.className = "pill pill-preview";
+  prevPill.textContent = "Preview";
+  prevPill.onclick = () => playSource(card, video, playerDiv, thumbDiv, preview, "direct", prevPill, pills);
+  pills.appendChild(prevPill);
+
+  // Stream pills from entries
+  if (v.entries && v.entries.length) {
+    // Dedupe and sort: 1080p > 720p > 480p > playlist
+    const order = { "1080p": 0, "720p": 1, "480p": 2, "playlist": 3 };
+    const sorted = [...v.entries].sort((a, b) => (order[a.quality] ?? 4) - (order[b.quality] ?? 4));
+
+    for (const e of sorted) {
+      const pill = document.createElement("button");
+      const qClass = ["1080p","720p","480p","playlist"].includes(e.quality) ? "pill-" + e.quality : "pill-other";
+      pill.className = "pill " + qClass;
+      pill.textContent = e.quality || "stream";
+      pill.title = e.source || "";
+      pill.onclick = () => playSource(card, video, playerDiv, thumbDiv, e.url, "hls", pill, pills);
+      pills.appendChild(pill);
+    }
+  }
+
+  // Click thumbnail to play best available
+  thumbDiv.onclick = () => {
+    if (v.entries && v.entries.length) {
+      const best = v.entries.find(e => e.quality === "1080p")
+                || v.entries.find(e => e.quality === "720p")
+                || v.entries[0];
+      playSource(card, video, playerDiv, thumbDiv, best.url, "hls", null, pills);
+    } else {
+      playSource(card, video, playerDiv, thumbDiv, preview, "direct", null, pills);
+    }
   };
 
-  document.getElementById("container").appendChild(card);
+  body.appendChild(codeDiv);
+  body.appendChild(pills);
+  card.appendChild(thumbDiv);
+  card.appendChild(playerDiv);
+  card.appendChild(body);
+  return card;
 }
 
-/* ------------------------
-   PLAYER + STICKY
------------------------- */
+/* ---- PLAY SOURCE ---- */
 
-function activatePlayer(player, url){
+function playSource(card, video, playerDiv, thumbDiv, url, type, activePill, pillsContainer) {
+  // Stop previous
+  if (activeVideo && activeVideo !== video) {
+    stopVideo(activeVideo);
+  }
+  closeMini();
 
-  if(activePlayer && activePlayer !== player){
-    activePlayer.pause();
+  // Mark active pill
+  pillsContainer.querySelectorAll(".pill").forEach(p => p.classList.remove("pill-active"));
+  if (activePill) activePill.classList.add("pill-active");
+
+  // Destroy old HLS on this video
+  if (activeHls) { activeHls.destroy(); activeHls = null; }
+
+  // Show player, hide thumb
+  playerDiv.classList.add("active");
+  thumbDiv.style.display = "none";
+
+  if (type === "hls" && url.includes(".m3u8")) {
+    if (Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) {
+          console.warn("HLS fatal error, falling back to direct");
+          hls.destroy();
+          video.src = url;
+          video.play().catch(() => {});
+        }
+      });
+      activeHls = hls;
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Safari native HLS
+      video.src = url;
+      video.play().catch(() => {});
+    }
+  } else {
+    video.src = url;
+    video.play().catch(() => {});
   }
 
-  activePlayer = player;
-  activeCard = player.closest(".video-card");
-
-  player.style.display = "block";
-  player.src = url;
-  player.play().catch(()=>{});
+  activeVideo = video;
+  activeCard = card;
 }
 
-/* Sticky logic */
-window.addEventListener("scroll", () => {
+function stopVideo(video) {
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+  const card = video.closest(".card");
+  if (card) {
+    const pd = card.querySelector(".card-player");
+    const td = card.querySelector(".card-thumb");
+    if (pd) pd.classList.remove("active");
+    if (td) td.style.display = "";
+    card.querySelectorAll(".pill-active").forEach(p => p.classList.remove("pill-active"));
+  }
+}
 
-  if(!activePlayer || !activeCard) return;
+/* ---- MINI PLAYER (STICKY) ---- */
+
+const miniEl = document.getElementById("miniPlayer");
+const miniVideo = miniEl.querySelector("video");
+
+document.getElementById("miniClose").onclick = closeMini;
+
+function closeMini() {
+  if (miniHls) { miniHls.destroy(); miniHls = null; }
+  miniVideo.pause();
+  miniVideo.removeAttribute("src");
+  miniEl.style.display = "none";
+  miniActive = false;
+}
+
+window.addEventListener("scroll", () => {
+  if (!activeVideo || !activeCard) return;
 
   const rect = activeCard.getBoundingClientRect();
+  const offscreen = rect.bottom < -50 || rect.top > window.innerHeight + 50;
 
-  if(rect.bottom < 0 || rect.top > window.innerHeight){
-    const mini = document.getElementById("miniPlayer");
-    const miniVideo = mini.querySelector("video");
+  if (offscreen && !miniActive) {
+    miniActive = true;
+    miniEl.style.display = "block";
 
-    mini.style.display = "block";
-    miniVideo.src = activePlayer.src;
-    miniVideo.play().catch(()=>{});
+    // Clone source to mini
+    if (activeHls) {
+      if (miniHls) miniHls.destroy();
+      const src = activeHls.url;
+      miniHls = new Hls({ enableWorker: true });
+      miniHls.loadSource(src);
+      miniHls.attachMedia(miniVideo);
+      miniHls.on(Hls.Events.MANIFEST_PARSED, () => {
+        miniVideo.currentTime = activeVideo.currentTime;
+        miniVideo.play().catch(() => {});
+      });
+    } else {
+      miniVideo.src = activeVideo.src;
+      miniVideo.currentTime = activeVideo.currentTime;
+      miniVideo.play().catch(() => {});
+    }
+
+    activeVideo.pause();
+  } else if (!offscreen && miniActive) {
+    // Back in view: resume inline, close mini
+    activeVideo.currentTime = miniVideo.currentTime;
+    activeVideo.play().catch(() => {});
+    closeMini();
   }
-  else{
-    document.getElementById("miniPlayer").style.display = "none";
-  }
-});
+}, { passive: true });
 
 </script>
 </body>
@@ -308,9 +671,9 @@ def generate():
     OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
 
-    # Write compact JSON
+    # Write structured JSON
     OUTPUT_JSON.write_text(
-        json.dumps(data, separators=(",", ":")),
+        json.dumps(data, indent=2, ensure_ascii=False),
         encoding="utf-8"
     )
 

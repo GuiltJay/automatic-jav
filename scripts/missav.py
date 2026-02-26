@@ -52,22 +52,42 @@ POST_CONCURRENCY = 20      # concurrent post pages
 RAW_DIR = "results/raw_missav"
 MASTER_CSV = "results/processed/missav.csv"
 OUTPUT_DIR = "docs"
-OUTPUT_RAW_CODE_FILE = os.path.join(OUTPUT_DIR, "codes.txt")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(BASE_DIR)
+OUTPUT_RAW_CODE_FILE = os.path.join(BASE_DIR, "docs", "codes.txt")
+MISSAV_JSON_FILE = os.path.join(BASE_DIR, "docs", "missav.json")
 
-def minus_codes(path):
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        return [item["code"] for item in data]
+def load_processed_codes() -> set[str]:
+    """Load already-processed codes (lowercased) from missav.json."""
+    if not os.path.isfile(MISSAV_JSON_FILE):
+        return set()
+    try:
+        with open(MISSAV_JSON_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {item["code"].strip().lower() for item in data if item.get("code")}
+    except (json.JSONDecodeError, KeyError):
+        return set()
 
 
-with open(OUTPUT_RAW_CODE_FILE, "r", encoding="utf-8") as rc:
+def build_guru_code_urls() -> List[str]:
+    """Read codes.txt, remove already-processed codes, return new MissAV URLs."""
+    if not os.path.isfile(OUTPUT_RAW_CODE_FILE):
+        print("[guru] codes.txt not found, skipping guru codes")
+        return []
+
+    processed = load_processed_codes()
+    print(f"Already Processed Codes: {len(processed)}")
+
     base = "https://missav123.com/dm291/en/"
-    codes = minus_codes("docs/missav.json")
-    print(f"Already Processed Codes: {len(codes)}")
-    guru_codes = [base + line.strip() for line in rc if line.strip() and line.strip() not in codes]
-    print(f"New Codes From Jav.Guru: {len(guru_codes)}")
+    new_urls = []
+    with open(OUTPUT_RAW_CODE_FILE, "r", encoding="utf-8") as rc:
+        for line in rc:
+            code = line.strip()
+            if code and code.lower() not in processed:
+                new_urls.append(base + code)
 
-
+    print(f"New Codes From Jav.Guru: {len(new_urls)}")
+    return new_urls
 
 # =========================
 # HTTP FETCHER
@@ -268,17 +288,31 @@ async def collect_posts_for_category(
 
 
 async def collect_all_posts(fetcher: Fetcher) -> List[str]:
+    processed_codes = load_processed_codes()
+    print(f"Already Processed Codes (missav.json): {len(processed_codes)}")
+
     page_sem = asyncio.Semaphore(PAGE_CONCURRENCY)
     all_posts = set()
-    all_posts.update(guru_codes)
-    
 
+    # Add new guru codes (already filtered inside build_guru_code_urls)
+    guru_urls = build_guru_code_urls()
+    all_posts.update(guru_urls)
+
+    # Collect from categories, then filter out already-processed
     for cat in CATEGORIES:
         posts = await collect_posts_for_category(cat, fetcher, page_sem)
         all_posts.update(posts)
-        
-    print(f"Total Link To Be Processed: {len(all_posts)}")
-        
+
+    # Remove any post whose video code is already in missav.json
+    before = len(all_posts)
+    all_posts = {
+        url for url in all_posts
+        if (extract_video_code(url) or "").lower() not in processed_codes
+    }
+    skipped = before - len(all_posts)
+    print(f"Skipped {skipped} already-processed links")
+    print(f"Total Links To Be Processed: {len(all_posts)}")
+
     return sorted(all_posts)
 
 # =========================
