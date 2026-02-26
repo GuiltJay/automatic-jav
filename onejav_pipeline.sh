@@ -36,7 +36,7 @@ run_py () {
 # ----------------------------------------
 run_py "$SCRIPTS_DIR/onejav.py"
 # Sanity check
-if ! ls "$RAW_DIR"/*.csv >/dev/null 2>&1; then
+if ! ls "$RAW_DIR"/*/*.csv >/dev/null 2>&1; then
   echo "❌ No OneJAV CSV files found in $RAW_DIR"
   exit 1
 fi
