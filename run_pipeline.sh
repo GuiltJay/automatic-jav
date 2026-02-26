@@ -65,28 +65,8 @@ if [[ ! -f "$PROCESSED_DIR/combined.csv" ]]; then
 fi
 
 # ----------------------------------------
-# 4) Build codes page -> docs/codes.html
-# ----------------------------------------
-run_py "$SCRIPTS_DIR/build_codes.py"
-
-# ----------------------------------------
-# 5) Build sitemap page -> docs/sitemap.html
-# ----------------------------------------
-run_py "$SCRIPTS_DIR/build_sitemap.py"
-
-# ----------------------------------------
-# 6) Build SEO & Stats
-# ----------------------------------------
-run_py "$SCRIPTS_DIR/build_seo.py"
-run_py "$SCRIPTS_DIR/build_stats.py"
-
-# ----------------------------------------
 # Done
 # ----------------------------------------
 echo "========================================"
-echo "✅ Pipeline finished successfully"
-echo "🌐 GitHub Pages entry: docs/index.html"
-echo "   - Codes:   docs/codes.html"
-echo "   - Sitemap: docs/sitemap.html"
-echo "   - Data:    results/processed/combined.csv"
+echo "✅ JAV.guru Pipeline finished successfully"
 echo "========================================"
