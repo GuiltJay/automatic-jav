@@ -50,6 +50,28 @@ jobs:
             bash missav_pipeline.sh
 
       # -------------------------
+      # RUN ONEJAV PIPELINE (override CMD)
+      # -------------------------
+      - name: Run OneJAV pipeline
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
+            -v "${GITHUB_WORKSPACE}/results:/app/results" \
+            scraper-pipeline \
+            bash onejav_pipeline.sh
+
+      # -------------------------
+      # RUN JAVCT PIPELINE (override CMD)
+      # -------------------------
+      - name: Run JavCT pipeline
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
+            -v "${GITHUB_WORKSPACE}/results:/app/results" \
+            scraper-pipeline \
+            bash javct_pipeline.sh
+
+      # -------------------------
       # DEBUG
       # -------------------------
       - name: Show outputs
