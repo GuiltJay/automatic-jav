@@ -211,6 +211,31 @@ body {
   font-size: 14px;
   margin-bottom: 8px;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.tag-guru {
+  background: rgba(96,165,250,0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(96,165,250,0.3);
+}
+
+.tag-category {
+  background: rgba(168,85,247,0.15);
+  color: #a855f7;
+  border: 1px solid rgba(168,85,247,0.3);
 }
 
 /* ---- PILLS ---- */
@@ -378,7 +403,7 @@ function initVirtual() {
     const q = document.getElementById("filter").value.toLowerCase().trim();
     if (q !== lastQ) {
       lastQ = q;
-      filtered = q ? DATA.filter(v => v.code.toLowerCase().includes(q)) : DATA;
+      filtered = q ? DATA.filter(v => v.code.toLowerCase().includes(q) || (v.tag||'').includes(q)) : DATA;
       updateStats(filtered.length);
     }
     return filtered;
@@ -455,6 +480,14 @@ function buildCard(v) {
   const codeDiv = document.createElement("div");
   codeDiv.className = "card-code";
   codeDiv.textContent = v.code.toUpperCase();
+
+  // Source tag
+  if (v.tag) {
+    const tag = document.createElement("span");
+    tag.className = v.tag === "jav.guru" ? "tag tag-guru" : "tag tag-category";
+    tag.textContent = v.tag === "jav.guru" ? "JAV.guru" : "Category";
+    codeDiv.appendChild(tag);
+  }
 
   // Pills
   const pills = document.createElement("div");
@@ -630,6 +663,9 @@ def generate():
         print(f"[✗] CSV not found: {INPUT_CSV}")
         return
 
+    guru_codes = load_guru_codes()
+    print(f"[i] Loaded {len(guru_codes)} codes from codes.txt")
+
     grouped = defaultdict(lambda: {"code": "", "entries": []})
 
     with INPUT_CSV.open(newline="", encoding="utf-8") as f:
@@ -662,10 +698,23 @@ def generate():
             if entry not in grouped[page_url]["entries"]:
                 grouped[page_url]["entries"].append(entry)
 
-    data = [
-        {"code": v["code"], "entries": v["entries"]}
-        for v in grouped.values()
-    ]
+    guru_count = 0
+    cat_count = 0
+    data = []
+    for v in grouped.values():
+        code = v["code"]
+        tag = "jav.guru" if code.lower() in guru_codes else "category"
+        if tag == "jav.guru":
+            guru_count += 1
+        else:
+            cat_count += 1
+        data.append({
+            "code": code,
+            "tag": tag,
+            "entries": v["entries"],
+        })
+
+    print(f"[i] Tagged: {guru_count} JAV.guru, {cat_count} Category")
 
     # Ensure output folders exist (IMPORTANT for CI)
     OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
