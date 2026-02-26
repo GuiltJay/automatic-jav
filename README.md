@@ -314,11 +314,11 @@ Site will be available at `https://<username>.github.io/<repo>/`
 
 - [x] **Add javct.com scraper** — Scrape amateur, uncensored, categories, and models
 - [x] **Add onejav.com scraper** — Torrent aggregation (20 days, tags, popular)
-- [ ] Add `robots.txt` and `sitemap.xml` for SEO
-- [ ] Stats dashboard (growth over time, source breakdown)
-- [ ] CSV/JSON export from sitemap page
-- [ ] Dark/light theme toggle
-- [ ] Rename `passvie_scraper.py` → `passive_scraper.py`
+- [x] Add `robots.txt` and `sitemap.xml` for SEO
+- [x] Stats dashboard (growth over time, source breakdown)
+- [x] CSV/JSON export from sitemap page
+- [x] Dark/light theme toggle
+- [x] Rename `passvie_scraper.py` → `passive_scraper.py`
 - [ ] Add automated tests
 
 ---
