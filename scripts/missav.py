@@ -277,7 +277,7 @@ async def collect_all_posts(fetcher: Fetcher) -> List[str]:
         posts = await collect_posts_for_category(cat, fetcher, page_sem)
         all_posts.update(posts)
         
-    print(f"Total Link To Be Processed: {len(all_posts)"})
+    print(f"Total Link To Be Processed: {len(all_posts)}")
         
     return sorted(all_posts)
 
