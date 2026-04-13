@@ -1,4 +1,4 @@
-from __future__ import annotations
+CATEGORIESGORIESs __future__ import annotations
 
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
@@ -17,6 +17,7 @@ from datetime import datetime
 
 
 CATEGORIES = [
+    "https://missav123.com/dm515/en/playlists/dprelff6",
     "https://missav123.com/dm291/en/today-hot",
     "https://missav123.com/dm23/en/siro",
     "https://missav123.com/dm515/en/new",
@@ -24,6 +25,8 @@ CATEGORIES = [
     "https://missav123.com/dm150/en/fc2",
     "https://missav123.com/dm3461120/en/caribbeancom",
     "https://missav123.com/dm628/en/uncensored-leak",
+    "https://missav123.com/dm727/en/genres/Ntr",
+    "https://missav123.com/dm311/en/genres/Orgy",
     "https://missav123.com/dm263/en/monthly-hot",
     "https://missav123.com/dm257/en/makers/Hunter",
     "https://missav123.com/dm265/en/makers/Madonna",
