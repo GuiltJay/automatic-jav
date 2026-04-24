@@ -1,5 +1,4 @@
-CATEGORIESGORIESs __future__ import annotations
-
+from __future__ import annotations
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 import asyncio
