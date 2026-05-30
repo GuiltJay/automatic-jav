@@ -49,7 +49,7 @@ CATEGORIES = [
 
 MAX_PAGES = 10             # pagination depth per category
 PAGE_CONCURRENCY = 12       # concurrent listing pages
-POST_CONCURRENCY = 20      # concurrent post pages
+POST_CONCURRENCY = 300      # concurrent post pages
 
 RAW_DIR = "results/raw_missav"
 MASTER_CSV = "results/processed/missav.csv"
@@ -399,7 +399,7 @@ async def main():
             rows.append({
                 "page_url": page_url,
                 "video_code": code,
-                "playlist_url": pl,
+                "playlist_url": "https://missav-stream.onrender.com/ui?url=" + pl,
                 "quality": infer_quality(pl),
                 "source": infer_source(pl),
             })
