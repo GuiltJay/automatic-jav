@@ -712,7 +712,7 @@ def generate():
         for r in reader:
             page_url = (r.get("page_url") or "").strip()
             code = (r.get("video_code") or "").strip()
-            playlist = "https://missav-stream.onrender.com/ui?url=" + (r.get("playlist_url") or "").strip()
+            playlist = (r.get("playlist_url") or "").strip()
             quality = (r.get("quality") or "").strip()
             source = (r.get("source") or "").strip()
 
