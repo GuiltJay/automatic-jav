@@ -478026,7 +478026,7 @@
   },
   {
     "code": "tcd-331",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -478047,7 +478047,7 @@
   },
   {
     "code": "tcd-332",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -478068,7 +478068,7 @@
   },
   {
     "code": "timd-033",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -500620,7 +500620,7 @@
   },
   {
     "code": "vnds-3440",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -517425,7 +517425,7 @@
   },
   {
     "code": "hoks-227",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -518151,7 +518151,7 @@
   },
   {
     "code": "mkd-258",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -518293,7 +518293,7 @@
   },
   {
     "code": "pkpd-420",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -518314,7 +518314,7 @@
   },
   {
     "code": "pkpl-066",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -528622,7 +528622,7 @@
   },
   {
     "code": "nsodn-020",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -529610,7 +529610,7 @@
   },
   {
     "code": "apgh-056",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -530025,7 +530025,7 @@
   },
   {
     "code": "chrv-221",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -533034,7 +533034,7 @@
   },
   {
     "code": "avsa-439",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -535354,7 +535354,7 @@
   },
   {
     "code": "huntc-391",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -535664,7 +535664,7 @@
   },
   {
     "code": "sdnm-551",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "1080p",
@@ -535685,7 +535685,7 @@
   },
   {
     "code": "sdnm-552",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "720p",
@@ -535817,7 +535817,7 @@
   },
   {
     "code": "start-588",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "720p",
@@ -535833,7 +535833,7 @@
   },
   {
     "code": "start-596",
-    "tag": "category",
+    "tag": "jav.guru",
     "entries": [
       {
         "quality": "720p",
@@ -535844,6 +535844,707 @@
         "quality": "playlist",
         "source": "surrit.com",
         "url": "https://surrit.com/675c7397-db5d-4b84-84d1-cd5983d4658a/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "brv-133",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ea816f2b-3654-4dd4-83c7-7a24a630e3d7/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ea816f2b-3654-4dd4-83c7-7a24a630e3d7/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ea816f2b-3654-4dd4-83c7-7a24a630e3d7/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "c-1495",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/3ff9b734-ad5c-4892-9abb-472cbe02a87b/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/3ff9b734-ad5c-4892-9abb-472cbe02a87b/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/a5147778-0e2c-4cf1-8c31-ffc579dedb2b/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/a5147778-0e2c-4cf1-8c31-ffc579dedb2b/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/a5147778-0e2c-4cf1-8c31-ffc579dedb2b/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "cnstv-013",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/52e40d09-a2b6-471c-8640-b55f3e2ce68d/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/52e40d09-a2b6-471c-8640-b55f3e2ce68d/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/52e40d09-a2b6-471c-8640-b55f3e2ce68d/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "cosx-109",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/9fc7256e-fd13-4735-96c1-1599a861c497/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/9fc7256e-fd13-4735-96c1-1599a861c497/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/9fc7256e-fd13-4735-96c1-1599a861c497/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "dsvr-1984",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/4f4e425c-ce85-4a39-a937-b6cbea34f703/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/4f4e425c-ce85-4a39-a937-b6cbea34f703/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/5098706e-6535-446c-8ee8-ea490e0f8ab9/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/5098706e-6535-446c-8ee8-ea490e0f8ab9/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/5098706e-6535-446c-8ee8-ea490e0f8ab9/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/2589f74f-1751-4fe7-a88e-4ab869614f89/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/2589f74f-1751-4fe7-a88e-4ab869614f89/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/608d2f5b-5b6b-42de-8497-af7c810848ed/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/608d2f5b-5b6b-42de-8497-af7c810848ed/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/717ce673-e847-4223-8422-74ae395b67c2/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/717ce673-e847-4223-8422-74ae395b67c2/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/2408a438-a564-49a5-9a78-71489964c69d/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/2408a438-a564-49a5-9a78-71489964c69d/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/2408a438-a564-49a5-9a78-71489964c69d/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/949eeee4-1ba6-4381-a5d1-824fe16932d8/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/949eeee4-1ba6-4381-a5d1-824fe16932d8/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/f261e4e1-a2c7-4e49-8eb0-5bfcfb3e9a04/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/f261e4e1-a2c7-4e49-8eb0-5bfcfb3e9a04/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/7615d258-6ac3-4546-a876-c52b2464a5bc/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/7615d258-6ac3-4546-a876-c52b2464a5bc/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/7615d258-6ac3-4546-a876-c52b2464a5bc/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/13d1f16b-b7bf-4bea-97f1-ed48efbf1185/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/13d1f16b-b7bf-4bea-97f1-ed48efbf1185/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/13d1f16b-b7bf-4bea-97f1-ed48efbf1185/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/104890c1-2886-4469-9156-5aa322248189/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/104890c1-2886-4469-9156-5aa322248189/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/104890c1-2886-4469-9156-5aa322248189/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "fch-124",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/63263cb7-e2c6-4f33-8464-2f778a948768/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/63263cb7-e2c6-4f33-8464-2f778a948768/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/63263cb7-e2c6-4f33-8464-2f778a948768/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "fns-215",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ea8b3c9d-69d1-4328-9a96-a492cf0577f5/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ea8b3c9d-69d1-4328-9a96-a492cf0577f5/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "gana-3404",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/61278923-ce28-4f99-bfe4-01f6acc45502/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/61278923-ce28-4f99-bfe4-01f6acc45502/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "hez-892",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/e6e425c4-0fc5-47a6-86ce-04a66b277b84/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/e6e425c4-0fc5-47a6-86ce-04a66b277b84/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/e6e425c4-0fc5-47a6-86ce-04a66b277b84/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "hez-894",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/da809a66-b706-4b68-a61e-f5ad48f9c01d/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/da809a66-b706-4b68-a61e-f5ad48f9c01d/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/da809a66-b706-4b68-a61e-f5ad48f9c01d/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "hez-896",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/369567bd-3c33-4b2e-9c5e-d630506f4484/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/369567bd-3c33-4b2e-9c5e-d630506f4484/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/369567bd-3c33-4b2e-9c5e-d630506f4484/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "hez-897",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/a6288996-13d0-4054-8082-a26f5354b84a/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/a6288996-13d0-4054-8082-a26f5354b84a/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/a6288996-13d0-4054-8082-a26f5354b84a/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "hez-898",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ee69981c-3197-4167-af93-34142ca525b8/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ee69981c-3197-4167-af93-34142ca525b8/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/ee69981c-3197-4167-af93-34142ca525b8/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "hez-899",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/7203f2ae-93db-4992-a06e-a9583d6039a8/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/7203f2ae-93db-4992-a06e-a9583d6039a8/720p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/7203f2ae-93db-4992-a06e-a9583d6039a8/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "hfc-042",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/b552127d-e0bd-451c-b182-ee68f2551b0e/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/b552127d-e0bd-451c-b182-ee68f2551b0e/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/b552127d-e0bd-451c-b182-ee68f2551b0e/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "jimmy-001",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/59a05fe5-4281-4582-b49f-5f84fd94808f/720p/video.m3u8"
+      },
+      {
+        "quality": "480p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/59a05fe5-4281-4582-b49f-5f84fd94808f/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "mbma-133",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/1b01304b-cbdd-4ffd-a13a-d0a9f1284b9d/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/1b01304b-cbdd-4ffd-a13a-d0a9f1284b9d/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/1b01304b-cbdd-4ffd-a13a-d0a9f1284b9d/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "mdtf-004",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/d6253194-6039-4e9a-b908-063b991a7768/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/d6253194-6039-4e9a-b908-063b991a7768/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/d6253194-6039-4e9a-b908-063b991a7768/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "oero-003",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "480p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/b1e6c351-bc8b-4fb0-ae51-d2bff24d4019/480p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/b1e6c351-bc8b-4fb0-ae51-d2bff24d4019/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "psst-052",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/9cf2ca66-c9dd-4777-b52f-2c8b64bb88ba/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/9cf2ca66-c9dd-4777-b52f-2c8b64bb88ba/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/9cf2ca66-c9dd-4777-b52f-2c8b64bb88ba/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "real-956",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/0ad00aef-5f54-458b-ab9f-d17cf93b56fb/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/0ad00aef-5f54-458b-ab9f-d17cf93b56fb/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/0ad00aef-5f54-458b-ab9f-d17cf93b56fb/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "skmn-013",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/4b442fd9-896f-4fc2-b6c9-e4e77946fe9f/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/4b442fd9-896f-4fc2-b6c9-e4e77946fe9f/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/4b442fd9-896f-4fc2-b6c9-e4e77946fe9f/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "smcd-032",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/545bfd35-027f-436d-bb80-8e452d624a3a/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/545bfd35-027f-436d-bb80-8e452d624a3a/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/545bfd35-027f-436d-bb80-8e452d624a3a/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/754b3d08-4872-4642-b9e5-f8ae90771c76/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/754b3d08-4872-4642-b9e5-f8ae90771c76/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/754b3d08-4872-4642-b9e5-f8ae90771c76/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "code": "",
+    "tag": "category",
+    "entries": [
+      {
+        "quality": "1080p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/67dd8da4-8958-4b3b-8705-45896d2df00c/1080p/video.m3u8"
+      },
+      {
+        "quality": "720p",
+        "source": "surrit.com",
+        "url": "https://surrit.com/67dd8da4-8958-4b3b-8705-45896d2df00c/720p/video.m3u8"
+      },
+      {
+        "quality": "playlist",
+        "source": "surrit.com",
+        "url": "https://surrit.com/67dd8da4-8958-4b3b-8705-45896d2df00c/playlist.m3u8"
       }
     ]
   }
