@@ -3,6 +3,10 @@ name: Jav Scraper
 on:
   workflow_dispatch:
 
+concurrency:
+  group: scraper-publish
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -14,35 +18,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       # -------------------------
       # Build Docker image
       # -------------------------
       - name: Build Docker image
-        run: |
-          docker build -t javguru-pipeline .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: javguru-pipeline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # -------------------------
       # Run pipeline container
       # -------------------------
       - name: Run pipeline
         run: |
-          docker run --name javguru-run javguru-pipeline
-
-      # -------------------------
-      # Copy outputs from container
-      # -------------------------
-      - name: Copy output from container
-        run: |
-          rm -rf docs results
-          docker cp javguru-run:/app/docs ./docs
-          docker cp javguru-run:/app/results ./results
-
-      - name: Cleanup container
-        if: always()
-        run: |
-          docker rm -f javguru-run || true
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
+            -v "${GITHUB_WORKSPACE}/results:/app/results" \
+            javguru-pipeline
 
       # -------------------------
       # Debug
@@ -51,6 +49,9 @@ jobs:
         run: |
           tree docs || true
           tree results || true
+
+      - name: Archive raw snapshots
+        uses: ./.github/actions/archive-raw
 
       # -------------------------
       # Commit results

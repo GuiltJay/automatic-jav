@@ -336,6 +336,16 @@ async def process_post(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
 def merge_daily_csvs():
     seen, rows = set(), []
 
+    # Main retains the master only; raw snapshots are archived on a separate
+    # branch. Seed it before merging this run's raw CSV.
+    if os.path.isfile(MASTER_CSV):
+        with open(MASTER_CSV, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                key = (r.get("page_url", ""), r.get("playlist_url", ""))
+                if key[0] and key[1] and key not in seen:
+                    seen.add(key)
+                    rows.append(r)
+
     if not os.path.isdir(RAW_DIR):
         return
 
@@ -345,7 +355,9 @@ def merge_daily_csvs():
 
         with open(os.path.join(RAW_DIR, file), newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                key = (r["page_url"], r["playlist_url"])
+                key = (r.get("page_url", ""), r.get("playlist_url", ""))
+                if not key[0] or not key[1]:
+                    continue
                 if key in seen:
                     continue
                 seen.add(key)

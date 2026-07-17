@@ -3,6 +3,13 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Scraper outputs: only the deduplicated masters and publishable feeds belong on main.
+# Raw snapshots are archived by CI on the raw-snapshots branch.
+results/raw/
+results/raw_missav/
+results/raw_onejav/
+results/raw_javct/
+
 # C extensions
 *.so
 

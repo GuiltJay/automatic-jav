@@ -75,6 +75,21 @@ def merge_csvs():
     skipped_missing_page_url = 0
     duplicates = 0
 
+    # The raw directory contains only this run's snapshots on main.  Seed the
+    # deduplicated master first so archival of raw history never drops records.
+    if os.path.isfile(OUTPUT_FILE):
+        with open(OUTPUT_FILE, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            if reader.fieldnames:
+                for col in reader.fieldnames:
+                    if col not in all_columns_set:
+                        all_columns_set.add(col)
+                        all_columns.append(col)
+                for row in reader:
+                    norm_page = row.get("normalized_page_url") or normalize_url(row.get(DEDUP_COL, ""))
+                    if norm_page:
+                        seen[norm_page] = (0, row.get("source_file", "master"), row)
+
     for fname in csv_files:
         path = os.path.join(RAW_RESULTS_DIR, fname)
         mtime = os.path.getmtime(path)

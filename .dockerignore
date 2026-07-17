@@ -1,6 +1,5 @@
-results/raw/
-results/raw_missav/
-results/processed/
+docs/
+results/
 .git/
 dump/
 README.md

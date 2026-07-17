@@ -90,32 +90,13 @@ def build_sitemap():
         print("ℹ️ No rows found to build sitemap.")
         return
 
-    # Export CSV/JSON for download
+    # Keep one compact data feed; the page loads and renders it client-side.
     sitemap_json = os.path.join(DOCS_DIR, "sitemap.json")
-    sitemap_csv = os.path.join(DOCS_DIR, "sitemap_export.csv")
-    
     import json
     with open(sitemap_json, "w", encoding="utf-8") as f:
-        json.dump(rows, f, indent=2)
-        
-    with open(sitemap_csv, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["page_url", "date_added", "host"])
-        writer.writeheader()
-        writer.writerows(rows)
+        json.dump(rows, f, ensure_ascii=False, separators=(",", ":"))
 
     generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    items = []
-    for r in rows:
-        d = r["date_added"] or "—"
-        host = r["host"] or "link"
-        items.append(
-            f"<li>"
-            f"  <span class='date'>{escape(d)}</span>"
-            f"  <a class='url' href='{escape(r['page_url'])}' target='_blank' rel='noopener noreferrer'>{escape(r['page_url'])}</a>"
-            f"  <span class='host'>{escape(host)}</span>"
-            f"</li>"
-        )
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -272,13 +253,10 @@ li:last-child {{ border-bottom:none; }}
     <input id="q" type="text" placeholder="Filter links..." autocomplete="off">
     <div class="chip" id="count">{len(rows)} items</div>
     <div style="flex:1"></div>
-    <a href="sitemap_export.csv" download class="chip" style="color:var(--accent);border-color:var(--accent);text-decoration:none;">Download CSV</a>
     <a href="sitemap.json" download class="chip" style="color:var(--accent);border-color:var(--accent);text-decoration:none;">Download JSON</a>
   </div>
 
-  <ul id="list">
-    {''.join(items)}
-  </ul>
+  <ul id="list"></ul>
 </div>
 
 </div>
@@ -287,18 +265,29 @@ li:last-child {{ border-bottom:none; }}
 const q = document.getElementById('q');
 const list = document.getElementById('list');
 const count = document.getElementById('count');
-const rows = Array.from(list.querySelectorAll('li'));
-
-q.addEventListener('input', () => {{
-  const term = (q.value || '').trim().toLowerCase();
-  let shown = 0;
-  rows.forEach(li => {{
-    const t = li.textContent.toLowerCase();
-    const ok = !term || t.includes(term);
-    li.style.display = ok ? '' : 'none';
-    if (ok) shown++;
-  }});
-  count.textContent = `${{shown}} items`;
+let rows = [];
+function render() {{
+  const term = q.value.trim().toLowerCase();
+  const filtered = term ? rows.filter(row =>
+    `${{row.page_url}} ${{row.date_added || ''}} ${{row.host || ''}}`.toLowerCase().includes(term)
+  ) : rows;
+  const fragment = document.createDocumentFragment();
+  for (const row of filtered) {{
+    const item = document.createElement('li');
+    const date = document.createElement('span'); date.className = 'date'; date.textContent = row.date_added || '—';
+    const link = document.createElement('a'); link.className = 'url'; link.href = row.page_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = row.page_url;
+    const host = document.createElement('span'); host.className = 'host'; host.textContent = row.host || 'link';
+    item.append(date, link, host); fragment.append(item);
+  }}
+  list.replaceChildren(fragment);
+  count.textContent = `${{filtered.length.toLocaleString()}} items`;
+}}
+q.addEventListener('input', render);
+fetch('sitemap.json').then(response => {{
+  if (!response.ok) throw new Error(`HTTP ${{response.status}}`);
+  return response.json();
+}}).then(data => {{ rows = data; render(); }}).catch(error => {{
+  count.textContent = 'Unable to load sitemap'; console.error(error);
 }});
 </script>
 

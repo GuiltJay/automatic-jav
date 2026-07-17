@@ -5,6 +5,10 @@ on:
     - cron: "0 10 * * *"  # 5:00 PM IST
   workflow_dispatch:
 
+concurrency:
+  group: scraper-publish
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -19,68 +23,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       # -------------------------
       # BUILD DOCKER IMAGE (ONCE)
       # -------------------------
       - name: Build Docker image
-        run: |
-          docker build -t scraper-pipeline .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: scraper-pipeline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # -------------------------
       # RUN JAV.GURU PIPELINE (default CMD)
       # -------------------------
-      - name: Run JAV.guru pipeline
-        run: |
-          docker run --rm \
-            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
-            -v "${GITHUB_WORKSPACE}/results:/app/results" \
-            scraper-pipeline
-
-      # -------------------------
-      # RUN MISSAV PIPELINE (override CMD)
-      # -------------------------
-      - name: Run MissAV pipeline
+      - name: Run all pipelines in one container
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
             -v "${GITHUB_WORKSPACE}/results:/app/results" \
             scraper-pipeline \
-            bash missav_pipeline.sh
-
-      # -------------------------
-      # RUN ONEJAV PIPELINE (override CMD)
-      # -------------------------
-      - name: Run OneJAV pipeline
-        run: |
-          docker run --rm \
-            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
-            -v "${GITHUB_WORKSPACE}/results:/app/results" \
-            scraper-pipeline \
-            bash onejav_pipeline.sh
-
-      # -------------------------
-      # RUN JAVCT PIPELINE (override CMD)
-      # -------------------------
-      - name: Run JavCT pipeline
-        run: |
-          docker run --rm \
-            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
-            -v "${GITHUB_WORKSPACE}/results:/app/results" \
-            scraper-pipeline \
-            bash javct_pipeline.sh
-
-      # -------------------------
-      # RUN AGGREGATOR PIPELINE (override CMD)
-      # -------------------------
-      - name: Run Aggregator pipeline
-        run: |
-          docker run --rm \
-            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
-            -v "${GITHUB_WORKSPACE}/results:/app/results" \
-            scraper-pipeline \
-            bash aggregator_pipeline.sh
+            bash -lc './run_pipeline.sh && ./missav_pipeline.sh && ./onejav_pipeline.sh && ./javct_pipeline.sh && ./aggregator_pipeline.sh'
 
       # -------------------------
       # DEBUG
@@ -91,6 +57,9 @@ jobs:
           ls -la docs || true
           echo "===== results ====="
           ls -la results || true
+
+      - name: Archive raw snapshots
+        uses: ./.github/actions/archive-raw
 
       # -------------------------
       # COMMIT GENERATED FILES
