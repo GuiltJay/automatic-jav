@@ -1,0 +1,30 @@
+name: Archive raw snapshots
+description: Copy this run's raw scraper outputs to the raw-snapshots branch.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        git fetch origin raw-snapshots
+        archive_dir="${RUNNER_TEMP}/raw-snapshots"
+        git worktree add --detach "$archive_dir" FETCH_HEAD
+        trap 'git worktree remove --force "$archive_dir"' EXIT
+
+        for directory in results/raw results/raw_missav results/raw_onejav results/raw_javct; do
+          if [[ -d "$directory" ]]; then
+            mkdir -p "$archive_dir/$directory"
+            cp -a "$directory/." "$archive_dir/$directory/"
+          fi
+        done
+
+        git -C "$archive_dir" add -f results/raw results/raw_missav results/raw_onejav results/raw_javct
+        if git -C "$archive_dir" diff --cached --quiet; then
+          echo "No raw snapshots changed."
+          exit 0
+        fi
+
+        git -C "$archive_dir" config user.name "github-actions[bot]"
+        git -C "$archive_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git -C "$archive_dir" commit -m "chore(raw): archive scraper snapshots ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+        git -C "$archive_dir" push origin HEAD:raw-snapshots

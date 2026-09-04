@@ -3,6 +3,10 @@ name: OneJAV Scraper
 on:
   workflow_dispatch:
 
+concurrency:
+  group: scraper-publish
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -14,11 +18,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Build Docker image
-        run: |
-          docker build -t onejav-pipeline .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: onejav-pipeline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run OneJAV pipeline
         run: |
@@ -27,6 +36,9 @@ jobs:
             -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
             onejav-pipeline \
             bash onejav_pipeline.sh
+
+      - name: Archive raw snapshots
+        uses: ./.github/actions/archive-raw
 
       - name: Commit & push data
         run: |

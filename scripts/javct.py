@@ -355,7 +355,7 @@ async def scrape_models_page(session: aiohttp.ClientSession, sem: asyncio.Semaph
 # =========================
 
 def merge_csvs():
-    """Merge all video and model CSVs into master files."""
+    """Merge existing masters with this run's video and model CSVs."""
     print("\n--- Merging Data ---")
     if not RAW_DIR.exists():
         return
@@ -363,6 +363,13 @@ def merge_csvs():
     # Videos
     v_seen = set()
     v_rows = []
+    if MASTER_CSV.exists():
+        with MASTER_CSV.open(newline="", encoding="utf-8") as file:
+            for r in csv.DictReader(file):
+                code = r.get("code", "").strip().lower()
+                if code and code not in v_seen:
+                    v_seen.add(code)
+                    v_rows.append(r)
     for f in RAW_DIR.rglob("*.csv"):
         if f.parent.name == "models":
             continue
@@ -385,6 +392,13 @@ def merge_csvs():
     # Models
     m_seen = set()
     m_rows = []
+    if MODELS_CSV.exists():
+        with MODELS_CSV.open(newline="", encoding="utf-8") as file:
+            for r in csv.DictReader(file):
+                name = r.get("name", "").strip().lower()
+                if name and name not in m_seen:
+                    m_seen.add(name)
+                    m_rows.append(r)
     models_dir = RAW_DIR / "models"
     if models_dir.exists():
         for f in models_dir.glob("*.csv"):

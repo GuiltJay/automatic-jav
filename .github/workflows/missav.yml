@@ -3,6 +3,10 @@ name: MissAV Scraper
 on:
   workflow_dispatch:
 
+concurrency:
+  group: scraper-publish
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -15,12 +19,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       # ---------- BUILD DOCKER IMAGE ----------
       - name: Build Docker image
-        run: |
-          docker build -t missav-pipeline .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: missav-pipeline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # ---------- RUN MISSAV (VOLUME MOUNTED) ----------
       - name: Run MissAV pipeline
@@ -38,6 +47,9 @@ jobs:
           ls -la results/raw_missav || true
           echo "===== processed ====="
           ls -la results/processed || true
+
+      - name: Archive raw snapshots
+        uses: ./.github/actions/archive-raw
 
       # ---------- COMMIT GENERATED FILES ----------
       - name: Commit & push data

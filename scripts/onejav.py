@@ -423,13 +423,21 @@ async def scrape_new_actresses(session: aiohttp.ClientSession, sem: asyncio.Sema
 # =========================
 
 def merge_all_csvs():
-    """Merge ALL .csv files recursively from results/raw_onejav/ -> onejav.csv"""
+    """Merge the existing master with this run's raw CSVs."""
     print("\n--- Merging All Data ---")
     seen: set[str] = set()
     rows: list[dict] = []
 
     if not RAW_DIR.exists():
         return
+
+    if MASTER_CSV.exists():
+        with MASTER_CSV.open(newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                code = r.get("code", "").strip().lower()
+                if code and code not in seen:
+                    seen.add(code)
+                    rows.append(r)
 
     csv_files = list(RAW_DIR.rglob("*.csv"))
     print(f"[*] Found {len(csv_files)} CSV files to merge.")
