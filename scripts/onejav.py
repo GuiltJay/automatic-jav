@@ -6,6 +6,7 @@ import json
 import os
 import re
 import random
+import time
 from bs4 import BeautifulSoup
 from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta, timezone
@@ -82,7 +83,12 @@ async def get_cf_cookies(start_url: str) -> dict:
             res = await crawler.arun(start_url)
             cookies = {}
             if hasattr(res, "cookies") and res.cookies:
-                cookies.update(res.cookies)
+                if isinstance(res.cookies, list):
+                    for c in res.cookies:
+                        if isinstance(c, dict) and "name" in c and "value" in c:
+                            cookies[c["name"]] = c["value"]
+                elif isinstance(res.cookies, dict):
+                    cookies.update(res.cookies)
             if not cookies:
                 print("⚠️  No cookies extracted — fallback will be used")
             else:
@@ -230,6 +236,8 @@ def save_to_folder(folder_name: str, file_name: str, items: List[TorrentItem]):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     safe_name = "".join([c for c in file_name if c.isalpha() or c.isdigit() or c in (' ', '-', '_')]).rstrip()
+    if not safe_name:
+        safe_name = "unnamed_" + str(int(time.time()))
 
     csv_path = out_dir / f"{safe_name}.csv"
     json_path = out_dir / f"{safe_name}.json"
@@ -359,7 +367,7 @@ async def scrape_home_page(session: aiohttp.ClientSession, sem: asyncio.Semaphor
         async def _do_featured(link: str):
             return await scrape_endpoint(session, sem, link, fallback_date=today_str)
 
-        results = await asyncio.gather(*[_do_featured(l) for l in featured_links])
+        results = await asyncio.gather(*[_do_featured(feat_link) for feat_link in featured_links])
         featured_items = [it for batch in results for it in batch]
         save_to_folder("home", "featured", featured_items)
 

@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 DOCS_DIR = "docs"
-BASE_URL = "https://guiltjay.github.io/automatic-jav"  # Change if hosted elsewhere
+if "GITHUB_REPOSITORY" in os.environ:
+    owner, repo = os.environ["GITHUB_REPOSITORY"].split("/")
+    BASE_URL = f"https://{owner}.github.io/{repo}"
+else:
+    BASE_URL = "https://guiltjay.github.io/automatic-jav"
 
 PAGES = [
     "index.html",
+    "browse.html",
     "home.html",
     "missav.html",
     "onejav.html",
@@ -28,7 +33,7 @@ Sitemap: {BASE_URL}/sitemap.xml
     print("✅ Generated robots.txt")
 
 def build_sitemap_xml():
-    date_str = datetime.now().strftime("%Y-%m-%d")
+    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     xml_items = []
     for page in PAGES:

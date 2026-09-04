@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os
 import csv
-from datetime import datetime
+import re
+from datetime import datetime, timezone
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 RAW_RESULTS_DIR = "results/raw"
@@ -52,8 +53,8 @@ def list_csv_files():
         f for f in os.listdir(RAW_RESULTS_DIR)
         if f.lower().endswith(".csv") and f != os.path.basename(OUTPUT_FILE)
     ]
-    # newest first by mtime
-    files.sort(key=lambda f: os.path.getmtime(os.path.join(RAW_RESULTS_DIR, f)), reverse=True)
+    # newest first by filename (contains YYYY-MM-DD_HHMMSS timestamp)
+    files.sort(reverse=True)
     return files
 
 def merge_csvs():
@@ -130,7 +131,7 @@ def merge_csvs():
 
     # output columns = all columns + extras
     out_columns = list(all_columns)
-    extras = ["normalized_page_url", "source_file", "source_file_mtime"]
+    extras = ["normalized_page_url", "source_file", "source_file_mtime", "date_added"]
     for c in extras:
         if c not in out_columns:
             out_columns.append(c)
@@ -138,6 +139,7 @@ def merge_csvs():
     # Write output (newest first)
     items = sorted(seen.items(), key=lambda kv: kv[1][0], reverse=True)
 
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as out:
         writer = csv.DictWriter(out, fieldnames=out_columns)
         writer.writeheader()
@@ -146,7 +148,9 @@ def merge_csvs():
             out_row = {col: row.get(col, "") for col in all_columns}
             out_row["normalized_page_url"] = norm_page
             out_row["source_file"] = fname
-            out_row["source_file_mtime"] = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+            out_row["source_file_mtime"] = datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            m = re.search(r"(\d{4}-\d{2}-\d{2})", fname)
+            out_row["date_added"] = m.group(1) if m else datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%d")
             writer.writerow(out_row)
 
     print("✅ Merge complete")

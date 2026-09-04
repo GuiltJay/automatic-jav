@@ -1,0 +1,447 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  currentPage?: 'overview' | 'browse' | 'codes' | 'models' | 'stats' | 'sitemap';
+  activeSource?: string;
+  itemCount?: number | string;
+  lastUpdated?: string;
+}
+
+const {
+  title = "JAV.guru Archive · Media Intelligence & Index",
+  description = "Archival catalogue and cross-referenced media index for JAV.guru, MissAV, OneJAV, and JavCT records.",
+  currentPage = "overview",
+  activeSource = "All Repositories",
+  itemCount = "75,000+",
+  lastUpdated = new Date().toISOString().split('T')[0]
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+
+const navLinks = [
+  { href: `${base}`, label: "Overview", id: "overview" },
+  { href: `${base}browse.html`, label: "Browse", id: "browse" },
+  { href: `${base}codes.html`, label: "Codes", id: "codes" },
+  { href: `${base}models.html`, label: "Models", id: "models" },
+  { href: `${base}stats.html`, label: "Statistics", id: "stats" },
+  { href: `${base}sitemap.html`, label: "Sitemap", id: "sitemap" },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+    .font-mono { font-family: 'IBM Plex Mono', monospace; }
+  </style>
+</head>
+<body data-base={base} class="bg-[var(--bg-shell)] text-[var(--text-bright)] flex flex-col min-h-screen selection:bg-[var(--accent-cyan)] selection:text-black">
+  <!-- Accessibility Skip link -->
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--accent-cyan)] focus:text-black font-semibold rounded">
+    Skip to main content
+  </a>
+
+  <!-- Top Console Header -->
+  <header class="border-b border-[var(--border-rule)] bg-[var(--bg-panel)] sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+      <!-- Brand & Status -->
+      <div class="flex items-center gap-3">
+        <a href={`${base}`} class="flex items-center gap-2 group text-inherit no-underline">
+          <span class="w-2.5 h-2.5 rounded-full bg-[var(--accent-cyan)] animate-pulse" title="System Operational"></span>
+          <span class="font-display font-bold tracking-tight text-lg text-[var(--text-bright)] group-hover:text-[var(--text-cyan)] transition-colors">
+            JAV.GURU <span class="text-[var(--text-dim)] font-normal text-xs ml-1 font-mono uppercase tracking-widest border border-[var(--border-rule)] px-1.5 py-0.5 rounded">ARCHIVE</span>
+          </span>
+        </a>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden md:flex items-center gap-1 font-mono text-xs">
+        {navLinks.map((item) => (
+          <a
+            href={item.href}
+            class={`px-3 py-1.5 rounded transition-all no-underline ${
+              currentPage === item.id
+                ? "bg-[var(--bg-panel-elevated)] text-[var(--text-cyan)] font-semibold border border-[var(--border-rule)]"
+                : "text-[var(--text-dim)] hover:text-[var(--text-bright)] hover:bg-[var(--bg-panel-hover)]"
+            }`}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+
+      <!-- Action Controls: Command Palette & Theme -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          id="cmd-palette-btn"
+          class="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-xs font-mono bg-[var(--bg-panel-elevated)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] text-[var(--text-dim)] rounded cursor-pointer transition-colors"
+          title="Open Command Palette (Cmd+K)"
+        >
+          <span>Find</span>
+          <kbd class="bg-[var(--bg-shell)] px-1.5 py-0.5 rounded text-[10px] text-[var(--text-bright)] border border-[var(--border-rule)]">⌘K</kbd>
+        </button>
+
+        <button
+          type="button"
+          id="theme-toggle-btn"
+          class="w-8 h-8 flex items-center justify-center rounded bg-[var(--bg-panel-elevated)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] text-[var(--text-dim)] hover:text-[var(--text-bright)] text-sm cursor-pointer"
+          aria-label="Toggle visual theme"
+        >
+          ◐
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Persistent Archive Rail (Context bar) -->
+  <aside class="border-b border-[var(--border-rule)] bg-[var(--bg-shell)] py-2 text-xs font-mono text-[var(--text-dim)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-1.5">
+          <span class="text-[var(--text-muted)]">SCOPE:</span>
+          <span class="text-[var(--text-bright)] font-semibold">{activeSource}</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-1.5 border-l border-[var(--border-rule)] pl-4">
+          <span class="text-[var(--text-muted)]">RECORDS:</span>
+          <span class="text-[var(--text-cyan)] tabular-nums">{itemCount}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <div class="flex items-center gap-1.5">
+          <span class="text-[var(--text-muted)]">PIPELINE:</span>
+          <span class="text-[var(--accent-green)] flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)]"></span>
+            ACTIVE (UTC {lastUpdated})
+          </span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Slot -->
+  <main id="main-content" class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full">
+    <slot />
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="border-t border-[var(--border-rule)] bg-[var(--bg-panel)] mt-auto py-6 text-xs text-[var(--text-dim)] font-mono">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span>JAV.GURU ARCHIVE CONSOLE</span>
+        <span>·</span>
+        <span>RESEARCH & METADATA FEED</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href={`${base}sitemap.html`} class="hover:text-[var(--text-cyan)] text-inherit no-underline">Sitemap</a>
+        <a href={`${base}stats.html`} class="hover:text-[var(--text-cyan)] text-inherit no-underline">Telemetry</a>
+        <a href="https://github.com/MrSpidy32/automatic-jav" target="_blank" rel="noopener noreferrer" class="hover:text-[var(--text-cyan)] text-inherit no-underline">GitHub Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Command Palette Modal (<dialog>) -->
+  <dialog id="cmd-dialog" class="backdrop:bg-black/75 bg-[var(--bg-panel)] border border-[var(--border-rule)] text-[var(--text-bright)] rounded-lg shadow-2xl p-0 w-full max-w-lg m-auto">
+    <div class="p-3 border-b border-[var(--border-rule)] flex items-center gap-2">
+      <span class="text-[var(--text-cyan)] font-mono text-sm">❯</span>
+      <input
+        type="search"
+        id="cmd-input"
+        placeholder="Type a command, route, or video code..."
+        class="w-full bg-transparent border-0 text-sm font-mono text-[var(--text-bright)] focus:outline-none placeholder:text-[var(--text-muted)]"
+        autocomplete="off"
+      />
+      <kbd class="text-[10px] font-mono bg-[var(--bg-shell)] border border-[var(--border-rule)] px-1.5 py-0.5 rounded text-[var(--text-dim)]">ESC</kbd>
+    </div>
+    <div id="cmd-results" class="max-h-80 overflow-y-auto p-2 font-mono text-xs flex flex-col gap-1">
+      <div class="text-[10px] text-[var(--text-muted)] px-2 py-1 uppercase tracking-wider">Direct Navigation</div>
+      <a href={`${base}`} class="cmd-item flex items-center justify-between px-3 py-2 rounded hover:bg-[var(--bg-panel-hover)] text-inherit no-underline">
+        <span>Overview & Freshness Dashboard</span>
+        <span class="text-[var(--text-dim)]">/</span>
+      </a>
+      <a href={`${base}browse.html`} class="cmd-item flex items-center justify-between px-3 py-2 rounded hover:bg-[var(--bg-panel-hover)] text-inherit no-underline">
+        <span>Browse All Media Records</span>
+        <span class="text-[var(--text-dim)]">/browse.html</span>
+      </a>
+      <a href={`${base}codes.html`} class="cmd-item flex items-center justify-between px-3 py-2 rounded hover:bg-[var(--bg-panel-hover)] text-inherit no-underline">
+        <span>Code Accession Index</span>
+        <span class="text-[var(--text-dim)]">/codes.html</span>
+      </a>
+      <a href={`${base}models.html`} class="cmd-item flex items-center justify-between px-3 py-2 rounded hover:bg-[var(--bg-panel-hover)] text-inherit no-underline">
+        <span>Models & Actresses Directory</span>
+        <span class="text-[var(--text-dim)]">/models.html</span>
+      </a>
+      <a href={`${base}stats.html`} class="cmd-item flex items-center justify-between px-3 py-2 rounded hover:bg-[var(--bg-panel-hover)] text-inherit no-underline">
+        <span>Ingestion Statistics & Charts</span>
+        <span class="text-[var(--text-dim)]">/stats.html</span>
+      </a>
+      <a href={`${base}sitemap.html`} class="cmd-item flex items-center justify-between px-3 py-2 rounded hover:bg-[var(--bg-panel-hover)] text-inherit no-underline">
+        <span>Sitemap & Raw Exports (CSV/JSON)</span>
+        <span class="text-[var(--text-dim)]">/sitemap.html</span>
+      </a>
+    </div>
+  </dialog>
+
+  <!-- Video Player Modal / Island -->
+  <dialog id="video-player-dialog" class="backdrop:bg-black/90 bg-black border border-[var(--border-rule)] text-white rounded-lg p-0 w-full max-w-4xl m-auto shadow-2xl">
+    <div class="flex items-center justify-between p-3 border-b border-[var(--border-rule)] bg-[var(--bg-panel)] text-xs font-mono">
+      <div class="flex items-center gap-2 truncate">
+        <span class="text-[var(--accent-cyan)]">PLAYBACK:</span>
+        <span id="player-title" class="text-white font-bold truncate">Loading...</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="player-quality-tag" class="px-1.5 py-0.5 bg-[var(--border-rule)] rounded text-[10px] uppercase"></span>
+        <button id="close-player-btn" type="button" class="text-gray-400 hover:text-white px-2 py-1 bg-transparent border-0 cursor-pointer font-bold text-sm">✕</button>
+      </div>
+    </div>
+    <div class="relative aspect-video bg-black flex items-center justify-center">
+      <video id="hls-video" controls playsinline class="w-full h-full max-h-[75vh]"></video>
+      <div id="player-status" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black/80 font-mono text-xs hidden">
+        <span id="player-error-msg" class="text-[var(--accent-amber)] mb-2"></span>
+        <a id="player-fallback-link" href="#" target="_blank" rel="noopener" class="text-[var(--accent-cyan)] underline hover:text-white">Open Source Web Page ↗</a>
+      </div>
+    </div>
+    <div id="player-stream-pills" class="p-3 bg-[var(--bg-panel)] flex flex-wrap items-center gap-2 border-t border-[var(--border-rule)] font-mono text-xs">
+      <!-- Dynamically populated stream quality selector pills -->
+    </div>
+  </dialog>
+
+  <!-- Client Scripts: Theme, Command Palette, Shortcuts, Hls Video Island -->
+  <script is:inline>
+    // Theme setup
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      const themeBtn = document.getElementById('theme-toggle-btn');
+      if (themeBtn) {
+        themeBtn.onclick = () => {
+          const current = document.documentElement.getAttribute('data-theme');
+          const next = current === 'light' ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+        };
+      }
+    })();
+
+    // Command Palette
+    (function() {
+      const dialog = document.getElementById('cmd-dialog');
+      const openBtn = document.getElementById('cmd-palette-btn');
+      const input = document.getElementById('cmd-input');
+      const results = document.getElementById('cmd-results');
+      if (!dialog) return;
+
+      function openPalette() {
+        dialog.showModal();
+        if (input) { input.value = ''; input.focus(); }
+      }
+      function closePalette() { dialog.close(); }
+
+      if (openBtn) openBtn.onclick = openPalette;
+      dialog.onclick = (e) => { if (e.target === dialog) closePalette(); };
+
+      // Global keyboard listener
+      window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          if (dialog.open) closePalette(); else openPalette();
+        } else if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+          e.preventDefault();
+          openPalette();
+        }
+      });
+
+      // Quick code filter inside command palette
+      if (input && results) {
+        input.addEventListener('input', (e) => {
+          const q = e.target.value.trim().toLowerCase();
+          const items = results.querySelectorAll('.cmd-item');
+          items.forEach(it => {
+            const text = it.textContent.toLowerCase();
+            it.style.display = !q || text.includes(q) ? 'flex' : 'none';
+          });
+        });
+      }
+    })();
+
+    // HLS Player Island Controller
+    window.AppPlayer = (function() {
+      let hlsInstance = null;
+      const dialog = document.getElementById('video-player-dialog');
+      const video = document.getElementById('hls-video');
+      const titleEl = document.getElementById('player-title');
+      const qualityTag = document.getElementById('player-quality-tag');
+      const statusBox = document.getElementById('player-status');
+      const errorMsg = document.getElementById('player-error-msg');
+      const fallbackLink = document.getElementById('player-fallback-link');
+      const pillsContainer = document.getElementById('player-stream-pills');
+      const closeBtn = document.getElementById('close-player-btn');
+
+      if (!dialog || !video) return { play: () => {} };
+
+      function stop() {
+        if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+        }
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        if (statusBox) statusBox.classList.add('hidden');
+      }
+
+      function close() {
+        stop();
+        dialog.close();
+      }
+
+      if (closeBtn) closeBtn.onclick = close;
+      dialog.onclick = (e) => { if (e.target === dialog) close(); };
+
+      async function play(item) {
+        stop();
+        function safeUrl(raw) {
+          if (!raw || typeof raw !== 'string') return '#';
+          const trimmed = raw.trim();
+          if (trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('/')) {
+            return trimmed;
+          }
+          return '#';
+        }
+
+        if (titleEl) titleEl.textContent = item.code ? `${item.code.toUpperCase()} ${item.title || ''}` : (item.title || 'Video Stream');
+        if (fallbackLink) fallbackLink.href = safeUrl(item.page_url);
+
+        const streams = (item.streams && item.streams.length ? item.streams : item.entries) || [];
+
+        // Render quality selector pills
+        if (pillsContainer) {
+          pillsContainer.replaceChildren();
+          const label = document.createElement('span');
+          label.className = 'text-[var(--text-muted)] mr-2';
+          label.textContent = 'AVAILABLE STREAMS:';
+          pillsContainer.appendChild(label);
+
+          if (streams.length === 0) {
+            const previewUrl = `https://fourhoi.com/${encodeURIComponent((item.code || '').toLowerCase())}/preview.mp4`;
+            const pill = document.createElement('button');
+            pill.className = 'px-2 py-1 rounded bg-[var(--bg-panel-elevated)] border border-[var(--border-rule)] text-[var(--accent-cyan)] font-mono text-xs cursor-pointer';
+            pill.textContent = 'Preview MP4';
+            pill.onclick = () => loadSource(previewUrl, 'direct', 'preview');
+            pillsContainer.appendChild(pill);
+          } else {
+            streams.forEach((s) => {
+              const pill = document.createElement('button');
+              pill.className = 'px-2 py-1 rounded bg-[var(--bg-panel-elevated)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] text-[var(--text-bright)] font-mono text-xs cursor-pointer';
+              pill.textContent = `${s.quality || 'stream'} (${s.source || 'surrit'})`;
+              pill.onclick = () => loadSource(safeUrl(s.url), 'hls', s.quality || 'stream');
+              pillsContainer.appendChild(pill);
+            });
+          }
+        }
+
+        dialog.showModal();
+
+        // Auto select best stream
+        if (streams.length > 0) {
+          const best = streams.find(s => s.quality === '1080p') || streams.find(s => s.quality === '720p') || streams[0];
+          loadSource(best.url, 'hls', best.quality || 'auto');
+        } else if (item.code) {
+          const previewUrl = `https://fourhoi.com/${item.code.toLowerCase()}/preview.mp4`;
+          loadSource(previewUrl, 'direct', 'preview');
+        }
+      }
+
+      const appBase = document.body.dataset.base || '/';
+
+      function loadHlsLibrary(onSuccess, onError) {
+        if (window.Hls) {
+          onSuccess(window.Hls);
+          return;
+        }
+
+        // Try local pinned asset first (bundled via npm hls.js 1.7.2)
+        const localScript = document.createElement('script');
+        localScript.src = `${appBase}hls.min.js`;
+        localScript.onload = () => {
+          if (window.Hls) onSuccess(window.Hls);
+          else fallbackCdn();
+        };
+        localScript.onerror = () => fallbackCdn();
+
+        function fallbackCdn() {
+          const cdnScript = document.createElement('script');
+          cdnScript.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.7.2/dist/hls.min.js';
+          cdnScript.integrity = 'sha384-xZKOEqJSfUEI1E4N6MG1+KjnKYM1R1v2WKpyaS0c+ksIxRi5PB8MAkyEdX48MX2/';
+          cdnScript.crossOrigin = 'anonymous';
+          cdnScript.onload = () => {
+            if (window.Hls) onSuccess(window.Hls);
+            else onError('Failed to initialize Hls.js library.');
+          };
+          cdnScript.onerror = () => onError('Failed to load Hls.js library from local and CDN sources.');
+          document.head.appendChild(cdnScript);
+        }
+
+        document.head.appendChild(localScript);
+      }
+
+      function loadSource(url, type, quality) {
+        const browserUrl = url;
+        if (qualityTag) qualityTag.textContent = quality;
+        if (statusBox) statusBox.classList.add('hidden');
+
+        if (type === 'hls' && browserUrl.includes('.m3u8')) {
+          loadHlsLibrary(
+            (HlsClass) => initHls(HlsClass, browserUrl),
+            (errMsg) => handlePlayerError(errMsg)
+          );
+        } else {
+          video.src = browserUrl;
+          video.play().catch(() => {});
+        }
+      }
+
+      function initHls(HlsClass, streamUrl) {
+        if (HlsClass.isSupported()) {
+          if (hlsInstance) hlsInstance.destroy();
+          hlsInstance = new HlsClass({ enableWorker: true, lowLatencyMode: false });
+          hlsInstance.loadSource(streamUrl);
+          hlsInstance.attachMedia(video);
+          hlsInstance.on(HlsClass.Events.MANIFEST_PARSED, () => {
+            video.play().catch(() => {});
+          });
+          hlsInstance.on(HlsClass.Events.ERROR, (_, data) => {
+            if (data.fatal) {
+              handlePlayerError(`Playback error: Stream source returned code ${data.response?.code || 'offline'}.`);
+            }
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = streamUrl;
+          video.play().catch(() => {});
+        } else {
+          handlePlayerError("HLS playback is not supported on this device/browser.");
+        }
+      }
+
+      function handlePlayerError(msg) {
+        if (statusBox) statusBox.classList.remove('hidden');
+        if (errorMsg) errorMsg.textContent = msg;
+      }
+
+      return { play, stop, close };
+    })();
+  </script>
+</body>
+</html>

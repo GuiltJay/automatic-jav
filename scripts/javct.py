@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import csv
-import json
 import os
 import random
+import time
 from bs4 import BeautifulSoup
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
@@ -77,7 +77,12 @@ async def get_cf_cookies(start_url: str) -> dict:
             res = await crawler.arun(start_url)
             cookies = {}
             if hasattr(res, "cookies") and res.cookies:
-                cookies.update(res.cookies)
+                if isinstance(res.cookies, list):
+                    for c in res.cookies:
+                        if isinstance(c, dict) and "name" in c and "value" in c:
+                            cookies[c["name"]] = c["value"]
+                elif isinstance(res.cookies, dict):
+                    cookies.update(res.cookies)
             if not cookies:
                 print("⚠️  No cookies extracted — fallback will be used")
             else:
@@ -264,6 +269,8 @@ def save_items(folder: str, filename: str, items: list, is_model: bool = False):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     safe_name = "".join([c for c in filename if c.isalpha() or c.isdigit() or c in (' ', '-', '_')]).rstrip()
+    if not safe_name:
+        safe_name = "unnamed_" + str(int(time.time()))
     csv_path = out_dir / f"{safe_name}.csv"
 
     fields = MODEL_FIELDS if is_model else VIDEO_FIELDS
@@ -364,7 +371,7 @@ def merge_csvs():
                     v_seen.add(code)
                     v_rows.append(r)
     for f in RAW_DIR.rglob("*.csv"):
-        if "models" in f.parts:
+        if f.parent.name == "models":
             continue
         with f.open(newline="", encoding="utf-8") as file:
             for r in csv.DictReader(file):

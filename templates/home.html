@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Home · JAV.guru{% endblock %}
+{% block head_extra %}{% endblock %}
+{% block content %}
+<div class="top-bar">
+  <h1>Home</h1>
+  <div class="meta">{{ total }} posts · {{ with_streams }} with streams · Generated {{ generated|e }}</div>
+</div>
+
+<div class="controls">
+  <input id="q" type="text" placeholder="Filter by URL or code..." autocomplete="off" aria-label="Search videos">
+  <div class="chip" id="statusChip">0 items</div>
+</div>
+
+<div class="pager">
+  <button id="prevBtn">Prev</button>
+  <span class="pinfo" id="pageInfo">Page 1</span>
+  <button id="nextBtn">Next</button>
+</div>
+
+<main><div class="grid" id="grid"></div></main>
+
+<div class="pager">
+  <button id="prevBtn2">Prev</button>
+  <span class="pinfo" id="pageInfo2">Page 1</span>
+  <button id="nextBtn2">Next</button>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+const ITEMS_PER_PAGE = {{ ITEMS_PER_PAGE }};
+const IMAGE_PROXY = "https://imgproxy.mrspidyxd.workers.dev/?url=";
+const allItems = {{ js_items | safe }};
+
+let filtered = allItems.slice();
+let page = 1;
+
+const grid = document.getElementById('grid');
+const q = document.getElementById('q');
+const statusChip = document.getElementById('statusChip');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const prevBtn2 = document.getElementById('prevBtn2');
+const nextBtn2 = document.getElementById('nextBtn2');
+const pageInfo = document.getElementById('pageInfo');
+const pageInfo2 = document.getElementById('pageInfo2');
+
+function totalPages() {
+  return Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+}
+function clampPage() {
+  const tp = totalPages();
+  if (page < 1) page = 1;
+  if (page > tp) page = tp;
+}
+
+function render() {
+  clampPage();
+  const tp = totalPages();
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  const chunk = filtered.slice(start, end);
+
+  statusChip.textContent = `${filtered.length} items (showing ${chunk.length})`;
+  pageInfo.textContent = `Page ${page} / ${tp}`;
+  pageInfo2.textContent = `Page ${page} / ${tp}`;
+
+  prevBtn.disabled = page <= 1;
+  prevBtn2.disabled = page <= 1;
+  nextBtn.disabled = page >= tp;
+  nextBtn2.disabled = page >= tp;
+
+  grid.replaceChildren();
+  if (filtered.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--color-text-dim);font-size:15px;';
+    empty.textContent = q.value ? 'No results found for "' + q.value + '"' : 'No results found';
+    grid.appendChild(empty);
+    return;
+  }
+  chunk.forEach(it => grid.appendChild(buildCard(it)));
+}
+
+function buildCard(it) {
+  const pageUrl = it.u || '';
+  const imgUrl = it.i || '';
+  const dateAdded = it.d || '';
+  const code = it.c || '';
+  const streams = it.s || [];
+  const hasStreams = streams.length > 0;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const thumbDiv = document.createElement('div');
+  thumbDiv.className = 'card-thumb';
+  thumbDiv.tabIndex = 0;
+  if (imgUrl) {
+    const img = document.createElement('img');
+    img.src = IMAGE_PROXY + encodeURIComponent(imgUrl);
+    img.loading = 'lazy';
+    img.alt = code;
+    img.onerror = function() {
+      const ph = document.createElement('div');
+      ph.className = 'ph';
+      this.replaceWith(ph);
+    };
+    const overlay = document.createElement('div');
+    overlay.className = 'play-overlay';
+    const icon = document.createElement('div');
+    icon.className = 'play-icon';
+    overlay.appendChild(icon);
+    thumbDiv.appendChild(img);
+    thumbDiv.appendChild(overlay);
+  } else {
+    const ph = document.createElement('div');
+    ph.className = 'ph';
+    thumbDiv.appendChild(ph);
+  }
+
+  const playerDiv = document.createElement('div');
+  playerDiv.className = 'card-player';
+  const video = document.createElement('video');
+  video.controls = true;
+  video.playsInline = true;
+  video.preload = 'none';
+  playerDiv.appendChild(video);
+
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  if (code) {
+    const codeDiv = document.createElement('div');
+    codeDiv.className = 'card-code';
+    codeDiv.textContent = code;
+    body.appendChild(codeDiv);
+  }
+
+  if (hasStreams) {
+    const pills = document.createElement('div');
+    pills.className = 'pills';
+
+    const preview = `https://fourhoi.com/${code.toLowerCase()}/preview.mp4`;
+    const prevPill = document.createElement('button');
+    prevPill.className = 'pill pill-preview';
+    prevPill.textContent = 'Preview';
+    prevPill.onclick = (e) => { e.stopPropagation(); playSource(card, video, playerDiv, thumbDiv, preview, 'direct', prevPill, pills); };
+    pills.appendChild(prevPill);
+
+    const order = { '1080p':0, '720p':1, '480p':2, 'playlist':3 };
+    const sorted = [...streams].sort((a,b) => (order[a.quality]??4) - (order[b.quality]??4));
+
+    for (const e of sorted) {
+      const pill = document.createElement('button');
+      const qClass = ['1080p','720p','480p','playlist'].includes(e.quality) ? 'pill-'+e.quality : 'pill-other';
+      pill.className = 'pill ' + qClass;
+      pill.textContent = e.quality || 'stream';
+      pill.title = e.source || '';
+      pill.onclick = (ev) => { ev.stopPropagation(); playSource(card, video, playerDiv, thumbDiv, e.url, 'hls', pill, pills); };
+      pills.appendChild(pill);
+    }
+
+    body.appendChild(pills);
+
+    thumbDiv.onclick = () => {
+      const best = streams.find(e => e.quality==='1080p')
+                || streams.find(e => e.quality==='720p')
+                || streams[0];
+      playSource(card, video, playerDiv, thumbDiv, best.url, 'hls', null, body.querySelector('.pills'));
+    };
+  } else {
+    thumbDiv.onclick = () => window.open(pageUrl, '_blank');
+    thumbDiv.title = 'Open source page';
+  }
+  thumbDiv.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); thumbDiv.click(); } };
+
+  const urlDiv = document.createElement('div');
+  urlDiv.className = 'card-url';
+  urlDiv.textContent = pageUrl;
+  body.appendChild(urlDiv);
+
+  const badges = document.createElement('div');
+  badges.className = 'badges';
+
+  if (dateAdded) {
+    const b = document.createElement('span');
+    b.className = 'badge';
+    b.textContent = dateAdded;
+    badges.appendChild(b);
+  }
+
+  if (hasStreams) {
+    const b = document.createElement('span');
+    b.className = 'badge badge-stream';
+    b.textContent = streams.length + ' stream' + (streams.length > 1 ? 's' : '');
+    badges.appendChild(b);
+  }
+
+  body.appendChild(badges);
+
+  const link = document.createElement('a');
+  link.className = 'card-link';
+  link.href = pageUrl;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = 'Open source page';
+  link.onclick = (e) => e.stopPropagation();
+  body.appendChild(link);
+
+  card.appendChild(thumbDiv);
+  card.appendChild(playerDiv);
+  card.appendChild(body);
+  return card;
+}
+
+function applyFilter() {
+  const term = (q.value || '').trim().toLowerCase();
+  filtered = !term
+    ? allItems.slice()
+    : allItems.filter(it => {
+        const hay = (it.u + ' ' + it.c).toLowerCase();
+        return hay.includes(term);
+      });
+  page = 1;
+  render();
+}
+
+prevBtn.addEventListener('click', () => { page--; render(); });
+nextBtn.addEventListener('click', () => { page++; render(); });
+prevBtn2.addEventListener('click', () => { page--; render(); });
+nextBtn2.addEventListener('click', () => { page++; render(); });
+
+let __t;
+q.addEventListener('input', () => {
+  window.clearTimeout(__t);
+  __t = window.setTimeout(applyFilter, 150);
+});
+
+render();
+</script>
+{% endblock %}

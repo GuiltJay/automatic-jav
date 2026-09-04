@@ -8,7 +8,8 @@ import csv
 import json
 from dataclasses import dataclass
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+import aiohttp
 
 # =========================
 # CONFIGURATION
@@ -95,8 +96,6 @@ def build_guru_code_urls() -> List[str]:
 # HTTP FETCHER
 # =========================
 
-import aiohttp
-
 @dataclass
 class Fetcher:
     session: Optional[aiohttp.ClientSession] = None
@@ -125,18 +124,24 @@ class Fetcher:
 # =========================
 
 def unquote_js_string(s: str) -> str:
+    if not s:
+        return s
     if len(s) >= 2 and s[0] in ("'", '"') and s[-1] == s[0]:
         s = s[1:-1]
-    return s.encode("utf-8").decode("unicode_escape")
+    try:
+        return s.encode("utf-8").decode("unicode_escape")
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        return s
 
+
+BASE_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 def int_to_base(n: int, base: int) -> str:
     if n == 0:
         return "0"
     out = []
     while n:
-        d = n % base
-        out.append(str(d) if d < 10 else chr(ord("a") + d - 10))
+        out.append(BASE_DIGITS[n % base])
         n //= base
     return "".join(reversed(out))
 
@@ -146,7 +151,7 @@ def decode_packed_eval(payload: str) -> Optional[str]:
     if start == -1:
         return None
 
-    chunk = payload[start:start + 20000]
+    chunk = payload[start:start + 500000]
     idx = chunk.find("}(")
     if idx == -1:
         return None
@@ -197,13 +202,19 @@ def decode_packed_eval(payload: str) -> Optional[str]:
         return None
 
     p = unquote_js_string(parts[0])
-    a, c = int(parts[1]), int(parts[2])
+    try:
+        a, c = int(parts[1]), int(parts[2])
+    except ValueError:
+        return None
     k = unquote_js_string(parts[3].split(".split")[0]).split("|")
 
+    lookup = {}
     for n in range(c - 1, -1, -1):
         key = int_to_base(n, a)
         val = k[n] if n < len(k) and k[n] else key
-        p = re.sub(rf"\b{re.escape(key)}\b", val, p)
+        lookup[key] = val
+
+    p = re.sub(r"\b\w+\b", lambda m: lookup.get(m.group(0), m.group(0)), p)
 
     return p
 
@@ -224,7 +235,11 @@ def extract_playlist_urls(text: str) -> List[str]:
 
 def extract_video_code(url: str) -> Optional[str]:
     slug = urlparse(url).path.rstrip("/").split("/")[-1]
-    return slug.lower() if re.fullmatch(r"[a-z0-9]+-\d+", slug, re.I) else None
+    clean = re.sub(r"-(uncensored-leak|leak|uncensored)$", "", slug, flags=re.I)
+    m = re.search(r"([a-z0-9]+(?:-[a-z0-9]+)*-\d+)", clean, re.I)
+    if m:
+        return m.group(1).lower()
+    return clean.lower() if clean else None
 
 
 def infer_quality(url: str) -> str:
@@ -282,7 +297,7 @@ async def collect_posts_for_category(
     posts = set()
     for r in results:
         if not r:
-            break
+            continue
         posts.update(r)
 
     print(f"[category] {start_url} → {len(posts)} posts")
@@ -336,16 +351,6 @@ async def process_post(url: str, fetcher: Fetcher, sem: asyncio.Semaphore):
 def merge_daily_csvs():
     seen, rows = set(), []
 
-    # Main retains the master only; raw snapshots are archived on a separate
-    # branch. Seed it before merging this run's raw CSV.
-    if os.path.isfile(MASTER_CSV):
-        with open(MASTER_CSV, newline="", encoding="utf-8") as f:
-            for r in csv.DictReader(f):
-                key = (r.get("page_url", ""), r.get("playlist_url", ""))
-                if key[0] and key[1] and key not in seen:
-                    seen.add(key)
-                    rows.append(r)
-
     if not os.path.isdir(RAW_DIR):
         return
 
@@ -355,9 +360,11 @@ def merge_daily_csvs():
 
         with open(os.path.join(RAW_DIR, file), newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                key = (r.get("page_url", ""), r.get("playlist_url", ""))
-                if not key[0] or not key[1]:
+                page_url = r.get("page_url", "")
+                playlist_url = r.get("playlist_url", "")
+                if not page_url or not playlist_url:
                     continue
+                key = (page_url, playlist_url)
                 if key in seen:
                     continue
                 seen.add(key)
@@ -387,7 +394,7 @@ async def main():
         tasks = [process_post(u, fetcher, sem) for u in post_urls]
         results = await asyncio.gather(*tasks)
 
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     os.makedirs(RAW_DIR, exist_ok=True)
 
     csv_path = f"{RAW_DIR}/Missav_links_{today}.csv"

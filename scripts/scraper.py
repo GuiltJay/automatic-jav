@@ -7,7 +7,7 @@ import random
 import re
 import csv
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Set, Tuple
 
 import aiohttp
@@ -25,7 +25,6 @@ RETRIES = 3
 TIMEOUT = 30
 
 OUT_DIR = "results/raw"
-os.makedirs(OUT_DIR, exist_ok=True)
 
 HEADERS = {
     "User-Agent": (
@@ -42,7 +41,7 @@ POST_PATTERN = re.compile(r"^https?://jav\.guru/\d+/.+")
 # ==========================================
 
 results: Set[Tuple[str, str]] = set()
-results_lock = asyncio.Lock()
+results_lock: Optional[asyncio.Lock] = None
 
 # ================= CF BOOTSTRAP =================
 
@@ -57,7 +56,12 @@ async def get_cf_cookies(start_url: str) -> dict:
 
         cookies = {}
         if hasattr(res, "cookies") and res.cookies:
-            cookies.update(res.cookies)
+            if isinstance(res.cookies, list):
+                for c in res.cookies:
+                    if isinstance(c, dict) and "name" in c and "value" in c:
+                        cookies[c["name"]] = c["value"]
+            elif isinstance(res.cookies, dict):
+                cookies.update(res.cookies)
 
         if not cookies:
             print("⚠️ No cookies extracted — fallback will be used")
@@ -115,9 +119,6 @@ async def fetch_with_retries(
 
         await asyncio.sleep(min(4, 0.6 * (2 ** attempt)) * random.uniform(0.8, 1.2))
 
-    return None
-
-
 # ================= PARSING (OLD LOGIC) =================
 
 def extract_links(html: str) -> Set[Tuple[str, str]]:
@@ -161,6 +162,10 @@ async def process_page(
 # ================= MAIN =================
 
 async def main():
+    global results_lock
+    results_lock = asyncio.Lock()
+    os.makedirs(OUT_DIR, exist_ok=True)
+    
     # Step 1 — pass CF once
     cookies = await get_cf_cookies(BASE_URL.format(1))
 
@@ -187,7 +192,7 @@ async def main():
         await asyncio.gather(*tasks)
 
     # Save CSV
-    today = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
     filepath = os.path.join(OUT_DIR, f"jav_links_{today}.csv")
 
     with open(filepath, "w", newline="", encoding="utf-8") as f:

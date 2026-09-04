@@ -1,0 +1,21 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "node scripts/prebuild.mjs && astro build && node scripts/postbuild.mjs",
+    "preview": "astro preview"
+  },
+  "type": "module",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.1",
+    "fuse.js": "^7.5.0",
+    "hls.js": "1.7.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "zod": "^4.5.4"
+  }
+}
