@@ -17,7 +17,7 @@ jobs:
       # CHECKOUT
       # -------------------------
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
@@ -42,7 +42,6 @@ jobs:
       # RUN MISSAV PIPELINE (override CMD)
       # -------------------------
       - name: Run MissAV pipeline
-        continue-on-error: true
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
@@ -54,7 +53,6 @@ jobs:
       # RUN ONEJAV PIPELINE (override CMD)
       # -------------------------
       - name: Run OneJAV pipeline
-        continue-on-error: true
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
@@ -66,7 +64,6 @@ jobs:
       # RUN JAVCT PIPELINE (override CMD)
       # -------------------------
       - name: Run JavCT pipeline
-        continue-on-error: true
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
@@ -78,13 +75,55 @@ jobs:
       # RUN AGGREGATOR PIPELINE (override CMD)
       # -------------------------
       - name: Run Aggregator pipeline
-        continue-on-error: true
         run: |
           docker run --rm \
             -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
             -v "${GITHUB_WORKSPACE}/results:/app/results" \
             scraper-pipeline \
             bash aggregator_pipeline.sh
+
+      # -------------------------
+      # VALIDATE PIPELINE DATA INTEGRITY
+      # -------------------------
+      - name: Validate Pipeline Data Integrity
+        run: |
+          test -f results/processed/combined.csv || { echo "❌ Missing combined.csv"; exit 1; }
+          test -s results/processed/combined.csv || { echo "❌ Empty combined.csv"; exit 1; }
+          test -f docs/stats.json || { echo "❌ Missing stats.json"; exit 1; }
+          test -f docs/catalogue.json || { echo "❌ Missing catalogue.json"; exit 1; }
+          test -f docs/codes.txt || { echo "❌ Missing codes.txt"; exit 1; }
+          echo "✅ Pipeline data integrity verified"
+
+      # -------------------------
+      # BUILD ASTRO STATIC FRONTEND
+      # -------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: '22.14.0'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Build Astro Static Site
+        run: |
+          cd app
+          npm ci
+          npm run build
+
+      # -------------------------
+      # TEST SUITE VERIFICATION
+      # -------------------------
+      - name: Setup Python for Tests
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Run UI & Routing Verification
+        run: |
+          pip install pytest playwright
+          playwright install --with-deps chromium
+          python3 -m pytest -q
 
       # -------------------------
       # DEBUG
@@ -104,7 +143,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add docs results || true
+          git add docs results
 
           if git diff --cached --quiet; then
             echo "ℹ️ No changes to commit"
@@ -113,3 +152,15 @@ jobs:
             git push origin main
             echo "✅ Data committed"
           fi
+
+      # -------------------------
+      # DEPLOY TO GITHUB PAGES
+      # -------------------------
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          user_name: "github-actions[bot]"
+          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          keep_files: false

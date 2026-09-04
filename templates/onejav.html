@@ -32,8 +32,12 @@ fetch("onejav.json")
   });
 
 function updateStats(shown) {
-  document.getElementById("stats").innerHTML =
-    `<b>${shown.toLocaleString()}</b> / ${DATA.length.toLocaleString()} torrents`;
+  const stats = document.getElementById("stats");
+  stats.textContent = '';
+  const b = document.createElement('b');
+  b.textContent = shown.toLocaleString();
+  stats.appendChild(b);
+  stats.appendChild(document.createTextNode(' / ' + DATA.length.toLocaleString() + ' torrents'));
 }
 
 function initVirtual() {
@@ -72,7 +76,7 @@ function initVirtual() {
     const si = startRow * cols;
     const ei = Math.min(items.length, endRow * cols);
 
-    container.innerHTML = "";
+    container.replaceChildren();
     if (items.length === 0) {
       const empty = document.createElement("div");
       empty.style.cssText = "grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--color-text-dim);font-size:15px;";
@@ -199,7 +203,15 @@ function buildCard(v) {
     btn.href = v.torrent_url;
     btn.target = "_blank";
     btn.rel = "noopener";
-    btn.innerHTML = DOWNLOAD_SVG + " Download .torrent";
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNs, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.style.cssText = 'width:14px;height:14px;fill:currentColor';
+    const p = document.createElementNS(svgNs, 'path');
+    p.setAttribute('d', 'M12 16l-5-5h3V4h4v7h3l-5 5zm-7 4h14v-2H5v2z');
+    svg.appendChild(p);
+    btn.appendChild(svg);
+    btn.appendChild(document.createTextNode(' Download .torrent'));
     btn.onmouseover = () => btn.style.filter = "brightness(1.15)";
     btn.onmouseout = () => btn.style.filter = "";
     body.appendChild(btn);

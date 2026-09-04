@@ -32,8 +32,12 @@ fetch("missav.json")
   });
 
 function updateStats(shown) {
-  document.getElementById("stats").innerHTML =
-    `<b>${shown.toLocaleString()}</b> / ${DATA.length.toLocaleString()} videos`;
+  const stats = document.getElementById("stats");
+  stats.textContent = '';
+  const b = document.createElement('b');
+  b.textContent = shown.toLocaleString();
+  stats.appendChild(b);
+  stats.appendChild(document.createTextNode(' / ' + DATA.length.toLocaleString() + ' videos'));
 }
 
 function initVirtual() {
@@ -68,7 +72,7 @@ function initVirtual() {
 
     if (activeHls) { activeHls.destroy(); activeHls = null; }
     closeMini();
-    container.innerHTML = "";
+    container.replaceChildren();
     if (items.length === 0) {
       const empty = document.createElement("div");
       empty.style.cssText = "grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--color-text-dim);font-size:15px;";
@@ -113,7 +117,22 @@ function buildCard(v) {
 
   const thumbDiv = document.createElement("div");
   thumbDiv.className = "card-thumb";
-  thumbDiv.innerHTML = `<img src="${escHtml(thumb)}" loading="lazy" alt="${escHtml(v.code)}"><div class="play-overlay"><div class="play-icon"></div></div>`;
+  const img = document.createElement('img');
+  img.src = thumb;
+  img.loading = 'lazy';
+  img.alt = v.code;
+  img.onerror = function() {
+    const ph = document.createElement('div');
+    ph.className = 'ph';
+    this.replaceWith(ph);
+  };
+  const overlay = document.createElement('div');
+  overlay.className = 'play-overlay';
+  const icon = document.createElement('div');
+  icon.className = 'play-icon';
+  overlay.appendChild(icon);
+  thumbDiv.appendChild(img);
+  thumbDiv.appendChild(overlay);
 
   const playerDiv = document.createElement("div");
   playerDiv.className = "card-player";

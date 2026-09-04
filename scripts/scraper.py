@@ -7,7 +7,7 @@ import random
 import re
 import csv
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Set, Tuple
 
 import aiohttp
@@ -56,7 +56,12 @@ async def get_cf_cookies(start_url: str) -> dict:
 
         cookies = {}
         if hasattr(res, "cookies") and res.cookies:
-            cookies.update(res.cookies)
+            if isinstance(res.cookies, list):
+                for c in res.cookies:
+                    if isinstance(c, dict) and "name" in c and "value" in c:
+                        cookies[c["name"]] = c["value"]
+            elif isinstance(res.cookies, dict):
+                cookies.update(res.cookies)
 
         if not cookies:
             print("⚠️ No cookies extracted — fallback will be used")
@@ -187,7 +192,7 @@ async def main():
         await asyncio.gather(*tasks)
 
     # Save CSV
-    today = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
     filepath = os.path.join(OUT_DIR, f"jav_links_{today}.csv")
 
     with open(filepath, "w", newline="", encoding="utf-8") as f:

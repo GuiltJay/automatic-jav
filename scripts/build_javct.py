@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
@@ -25,6 +26,14 @@ def load_guru_codes() -> set[str]:
     }
 
 
+def clean_code(c: str) -> str:
+    cleaned = re.sub(r"-(rm|sub|c|uncensored|leak|hd)$", "", c.strip().lower())
+    return cleaned
+
+
+def normalize_code(c: str) -> str:
+    return "".join(ch for ch in c if ch.isalnum())
+
 
 def generate():
 
@@ -33,6 +42,7 @@ def generate():
         return
 
     guru_codes = load_guru_codes()
+    guru_codes_norm = {normalize_code(c) for c in guru_codes}
     print(f"[i] Loaded {len(guru_codes)} codes from codes.txt")
 
     data = []
@@ -51,7 +61,13 @@ def generate():
                 continue
             seen_codes.add(code_lower)
 
-            source_tag = "jav.guru" if code_lower in guru_codes else "new"
+            cleaned = clean_code(code_lower)
+            is_guru = (
+                code_lower in guru_codes
+                or cleaned in guru_codes
+                or normalize_code(cleaned) in guru_codes_norm
+            )
+            source_tag = "jav.guru" if is_guru else "new"
 
             data.append({
                 "code": code,
@@ -81,7 +97,7 @@ def generate():
     html = template.render(current_page="javct")
     OUTPUT_HTML.write_text(html, encoding="utf-8")
 
-    print(f"[ok] JavCT page build generated.")
+    print("[ok] JavCT page build generated.")
     print(f"Videos: {len(data)}")
 
 if __name__ == "__main__":

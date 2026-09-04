@@ -3,7 +3,7 @@ import os
 import csv
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from jinja2 import Environment, FileSystemLoader
 
 # =========================
@@ -78,7 +78,7 @@ def extract_all():
 # BUILD HTML
 # =========================
 def build_html(codes):
-    generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     total = len(codes)
 
     env = Environment(loader=FileSystemLoader("templates"))

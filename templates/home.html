@@ -71,7 +71,7 @@ function render() {
   nextBtn.disabled = page >= tp;
   nextBtn2.disabled = page >= tp;
 
-  grid.innerHTML = '';
+  grid.replaceChildren();
   if (filtered.length === 0) {
     const empty = document.createElement('div');
     empty.style.cssText = 'grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--color-text-dim);font-size:15px;';
@@ -97,9 +97,26 @@ function buildCard(it) {
   thumbDiv.className = 'card-thumb';
   thumbDiv.tabIndex = 0;
   if (imgUrl) {
-    thumbDiv.innerHTML = `<img src="${escHtml(IMAGE_PROXY + encodeURIComponent(imgUrl))}" loading="lazy" alt="${escHtml(code)}" onerror="this.outerHTML='<div class=ph></div>'"><div class="play-overlay"><div class="play-icon"></div></div>`;
+    const img = document.createElement('img');
+    img.src = IMAGE_PROXY + encodeURIComponent(imgUrl);
+    img.loading = 'lazy';
+    img.alt = code;
+    img.onerror = function() {
+      const ph = document.createElement('div');
+      ph.className = 'ph';
+      this.replaceWith(ph);
+    };
+    const overlay = document.createElement('div');
+    overlay.className = 'play-overlay';
+    const icon = document.createElement('div');
+    icon.className = 'play-icon';
+    overlay.appendChild(icon);
+    thumbDiv.appendChild(img);
+    thumbDiv.appendChild(overlay);
   } else {
-    thumbDiv.innerHTML = '<div class="ph"></div>';
+    const ph = document.createElement('div');
+    ph.className = 'ph';
+    thumbDiv.appendChild(ph);
   }
 
   const playerDiv = document.createElement('div');

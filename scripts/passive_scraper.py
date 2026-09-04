@@ -6,7 +6,7 @@ import csv
 import time
 import random
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 BASE_URL = "https://jav.guru/page/{}/"
 PAGES_TO_FETCH = 20  # adjust as needed
@@ -61,7 +61,7 @@ def main():
         time.sleep(random.uniform(1, 3))  # polite crawling
 
     # Filename with current date & time to avoid overwriting in quick succession
-    today = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
     filename = f"jav_links_{today}.csv"
     filepath = os.path.join(OUT_DIR, filename)
 

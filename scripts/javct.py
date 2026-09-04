@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import csv
-import json
 import os
 import random
 import time
@@ -78,7 +77,12 @@ async def get_cf_cookies(start_url: str) -> dict:
             res = await crawler.arun(start_url)
             cookies = {}
             if hasattr(res, "cookies") and res.cookies:
-                cookies.update(res.cookies)
+                if isinstance(res.cookies, list):
+                    for c in res.cookies:
+                        if isinstance(c, dict) and "name" in c and "value" in c:
+                            cookies[c["name"]] = c["value"]
+                elif isinstance(res.cookies, dict):
+                    cookies.update(res.cookies)
             if not cookies:
                 print("⚠️  No cookies extracted — fallback will be used")
             else:

@@ -8,7 +8,7 @@ import csv
 import json
 from dataclasses import dataclass
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import aiohttp
 
 # =========================
@@ -134,13 +134,14 @@ def unquote_js_string(s: str) -> str:
         return s
 
 
+BASE_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 def int_to_base(n: int, base: int) -> str:
     if n == 0:
         return "0"
     out = []
     while n:
-        d = n % base
-        out.append(str(d) if d < 10 else chr(ord("a") + d - 10))
+        out.append(BASE_DIGITS[n % base])
         n //= base
     return "".join(reversed(out))
 
@@ -207,10 +208,13 @@ def decode_packed_eval(payload: str) -> Optional[str]:
         return None
     k = unquote_js_string(parts[3].split(".split")[0]).split("|")
 
+    lookup = {}
     for n in range(c - 1, -1, -1):
         key = int_to_base(n, a)
         val = k[n] if n < len(k) and k[n] else key
-        p = re.sub(rf"\b{re.escape(key)}\b", val, p)
+        lookup[key] = val
+
+    p = re.sub(r"\b\w+\b", lambda m: lookup.get(m.group(0), m.group(0)), p)
 
     return p
 
@@ -231,7 +235,11 @@ def extract_playlist_urls(text: str) -> List[str]:
 
 def extract_video_code(url: str) -> Optional[str]:
     slug = urlparse(url).path.rstrip("/").split("/")[-1]
-    return slug.lower() if re.fullmatch(r"[a-z0-9]+-\d+", slug, re.I) else None
+    clean = re.sub(r"-(uncensored-leak|leak|uncensored)$", "", slug, flags=re.I)
+    m = re.search(r"([a-z0-9]+(?:-[a-z0-9]+)*-\d+)", clean, re.I)
+    if m:
+        return m.group(1).lower()
+    return clean.lower() if clean else None
 
 
 def infer_quality(url: str) -> str:
@@ -386,7 +394,7 @@ async def main():
         tasks = [process_post(u, fetcher, sem) for u in post_urls]
         results = await asyncio.gather(*tasks)
 
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     os.makedirs(RAW_DIR, exist_ok=True)
 
     csv_path = f"{RAW_DIR}/Missav_links_{today}.csv"

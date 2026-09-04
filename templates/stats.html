@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Stats Dashboard · JAV.guru{% endblock %}
 {% block head_extra %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" integrity="sha384-b0GXujLkk9eYYSmcSfoyZbfyElGAQnDyY0skCHSG6w3JgTMFnz11ggrTAr7seu9f" crossorigin="anonymous"></script>
 <style>
 .kpi-grid {
   display: grid;
@@ -60,7 +60,17 @@ fetch("stats.json")
   .then(data => {
     const kpi = document.getElementById('kpi');
     for (const [src, val] of Object.entries(data.sources)) {
-      kpi.innerHTML += '<div class="stat-card"><div class="stat-val">' + Number(val).toLocaleString() + '</div><div class="stat-lbl">' + escHtml(src) + ' Videos</div></div>';
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      const valEl = document.createElement('div');
+      valEl.className = 'stat-val';
+      valEl.textContent = Number(val).toLocaleString();
+      const lblEl = document.createElement('div');
+      lblEl.className = 'stat-lbl';
+      lblEl.textContent = src + ' Videos';
+      card.appendChild(valEl);
+      card.appendChild(lblEl);
+      kpi.appendChild(card);
     }
 
     const dates = Object.keys(data.timeline).sort();

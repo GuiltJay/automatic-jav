@@ -3,7 +3,7 @@ import os
 import csv
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlsplit
 from jinja2 import Environment, FileSystemLoader
 
@@ -93,21 +93,28 @@ def build_sitemap():
 
     # Export CSV/JSON for download
     sitemap_json = os.path.join(DOCS_DIR, "sitemap.json")
+    sitemap_preview = os.path.join(DOCS_DIR, "sitemap_preview.json")
     sitemap_csv = os.path.join(DOCS_DIR, "sitemap_export.csv")
     
     with open(sitemap_json, "w", encoding="utf-8") as f:
-        json.dump(rows, f, indent=2)
+        json.dump(rows, f, separators=(",", ":"))
+
+    with open(sitemap_preview, "w", encoding="utf-8") as f:
+        json.dump(rows[:1000], f, separators=(",", ":"))
         
     with open(sitemap_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["page_url", "date_added", "host"])
         writer.writeheader()
         writer.writerows(rows)
 
-    generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     env = Environment(loader=FileSystemLoader("templates"))
     template = env.get_template("sitemap.html")
     html = template.render(rows=rows, generated=generated, current_page="sitemap")
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write(html)
 
     print(f"✅ Sitemap built: {OUTPUT_FILE}")
     print(f"   Links: {len(rows)}")

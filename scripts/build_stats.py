@@ -4,7 +4,6 @@ import csv
 import json
 import re
 from collections import defaultdict
-from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 
 RESULTS_DIR = "results/processed"
@@ -28,20 +27,19 @@ def load_data():
     if os.path.exists(comb_path):
         with open(comb_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            if not reader.fieldnames:
-                return stats
-            has_date = "date_added" in reader.fieldnames
-            has_src = "source_file" in reader.fieldnames
-            count = 0
-            for r in reader:
-                count += 1
-                d = r.get("date_added", "") if has_date else ""
-                if not d and has_src:
-                    m = re.search(r"(\d{4}-\d{2}-\d{2})", r.get("source_file", ""))
-                    d = m.group(1) if m else ""
-                if d:
-                    stats["timeline"][d] += 1
-            stats["sources"]["JAV.guru"] = count
+            if reader.fieldnames:
+                has_date = "date_added" in reader.fieldnames
+                has_src = "source_file" in reader.fieldnames
+                count = 0
+                for r in reader:
+                    count += 1
+                    d = r.get("date_added", "") if has_date else ""
+                    if not d and has_src:
+                        m = re.search(r"(\d{4}-\d{2}-\d{2})", r.get("source_file", ""))
+                        d = m.group(1) if m else ""
+                    if d:
+                        stats["timeline"][d] += 1
+                stats["sources"]["JAV.guru"] = count
 
     # 2. MissAV
     missav_path = os.path.join(RESULTS_DIR, "missav.csv")
@@ -71,7 +69,7 @@ def load_data():
     codes_path = os.path.join(DOCS_DIR, "codes.txt")
     if os.path.exists(codes_path):
         with open(codes_path, encoding="utf-8") as f:
-            stats["total_codes"] = len([l for l in f.read().splitlines() if l.strip()])
+            stats["total_codes"] = len([code_line for code_line in f.read().splitlines() if code_line.strip()])
 
     return stats
 

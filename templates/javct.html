@@ -32,8 +32,12 @@ fetch("javct.json")
   });
 
 function updateStats(shown) {
-  document.getElementById("stats").innerHTML =
-    `<b>${shown.toLocaleString()}</b> / ${DATA.length.toLocaleString()} videos`;
+  const stats = document.getElementById("stats");
+  stats.textContent = '';
+  const b = document.createElement('b');
+  b.textContent = shown.toLocaleString();
+  stats.appendChild(b);
+  stats.appendChild(document.createTextNode(' / ' + DATA.length.toLocaleString() + ' videos'));
 }
 
 function initVirtual() {
@@ -70,7 +74,7 @@ function initVirtual() {
     const si = startRow * cols;
     const ei = Math.min(items.length, endRow * cols);
 
-    container.innerHTML = "";
+    container.replaceChildren();
     if (items.length === 0) {
       const empty = document.createElement("div");
       empty.style.cssText = "grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--color-text-dim);font-size:15px;";

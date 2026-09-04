@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
@@ -28,28 +28,34 @@ jobs:
       # -------------------------
       - name: Run pipeline
         run: |
-          docker run --name javguru-run javguru-pipeline
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}/docs:/app/docs" \
+            -v "${GITHUB_WORKSPACE}/results:/app/results" \
+            javguru-pipeline
 
       # -------------------------
-      # Copy outputs from container
+      # Build Astro Static Frontend
       # -------------------------
-      - name: Copy output from container
-        run: |
-          docker cp javguru-run:/app/docs ./docs || true
-          docker cp javguru-run:/app/results ./results || true
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.2.0
+        with:
+          node-version: '22.14.0'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
 
-      - name: Cleanup container
-        if: always()
+      - name: Build Astro Static Site
         run: |
-          docker rm -f javguru-run || true
+          cd app
+          npm ci
+          npm run build
 
       # -------------------------
       # Debug
       # -------------------------
       - name: Show results
         run: |
-          tree docs || true
-          tree results || true
+          ls -la docs || true
+          ls -la results || true
 
       # -------------------------
       # Commit results
@@ -59,21 +65,21 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add docs/*.html results/**/*.csv || true
+          git add docs results
 
-          if ! git diff --cached --quiet; then
+          if git diff --cached --quiet; then
+            echo "ℹ️ No changes to commit"
+          else
             git commit -m "chore(data): update results ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
             git push origin main
             echo "✅ Data committed"
-          else
-            echo "ℹ️ No changes to commit"
           fi
 
       # -------------------------
       # Publish Pages
       # -------------------------
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs

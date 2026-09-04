@@ -26,6 +26,10 @@ def load_guru_codes() -> set[str]:
 
 
 
+def normalize_code(c: str) -> str:
+    return "".join(ch for ch in c.lower() if ch.isalnum())
+
+
 def generate():
 
     if not INPUT_CSV.exists():
@@ -33,6 +37,7 @@ def generate():
         return
 
     guru_codes = load_guru_codes()
+    guru_codes_norm = {normalize_code(c) for c in guru_codes}
     print(f"[i] Loaded {len(guru_codes)} codes from codes.txt")
 
     data = []
@@ -53,11 +58,12 @@ def generate():
                 continue
 
             code_lower = code.lower()
+            code_norm = normalize_code(code)
             if code_lower in seen_codes:
                 continue
             seen_codes.add(code_lower)
 
-            source_tag = "jav.guru" if code_lower in guru_codes else "new"
+            source_tag = "jav.guru" if (code_lower in guru_codes or code_norm in guru_codes_norm) else "new"
 
             data.append({
                 "code": code,
@@ -93,7 +99,7 @@ def generate():
     html = template.render(current_page="onejav")
     OUTPUT_HTML.write_text(html, encoding="utf-8")
 
-    print(f"[ok] OneJAV page build generated.")
+    print("[ok] OneJAV page build generated.")
     print(f"Torrents: {len(data)}")
     print(f"JSON: {OUTPUT_JSON}")
     print(f"HTML: {OUTPUT_HTML}")

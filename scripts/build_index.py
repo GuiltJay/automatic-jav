@@ -3,7 +3,7 @@ import os
 import csv
 import re
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from jinja2 import Environment, FileSystemLoader
 
 COMBINED_FILE = os.path.join("results", "processed", "combined.csv")
@@ -107,7 +107,7 @@ def build_home():
         print("ℹ️ No items to build home page.")
         return
 
-    generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     total = len(items)
     with_streams = sum(1 for it in items if it["streams"])
 

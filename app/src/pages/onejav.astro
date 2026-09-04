@@ -1,0 +1,14 @@
+---
+const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content={`0;url=${base}browse.html?source=onejav`}>
+  <title>Redirecting to OneJAV Torrents...</title>
+</head>
+<body style="background:#0C1013;color:#94A3B0;font-family:monospace;padding:40px;text-align:center;">
+  <p>Redirecting to <a href={`${base}browse.html?source=onejav`} style="color:#00A7B5;">OneJAV Torrents Index</a>...</p>
+</body>
+</html>

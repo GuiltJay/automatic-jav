@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+let codes = [];
+try {
+  const codesPath = path.resolve('public/codes.txt');
+  if (fs.existsSync(codesPath)) {
+    codes = fs.readFileSync(codesPath, 'utf-8')
+      .split('\n')
+      .map(c => c.trim())
+      .filter(Boolean);
+  }
+} catch (e) {
+  // fallback
+}
+
+const totalCodes = codes.length;
+const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+---
+
+<BaseLayout title="Code Accession Index · JAV.guru" currentPage="codes" activeSource="Codes Directory" itemCount={`${totalCodes.toLocaleString()} codes`}>
+  <div class="space-y-6">
+
+    <!-- Top Header -->
+    <div class="border-b border-[var(--border-rule)] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4 font-mono">
+      <div>
+        <div class="text-xs text-[var(--accent-cyan)] mb-1">REGISTRY // CODES</div>
+        <h1 class="font-display text-2xl font-bold text-[var(--text-bright)]">Code Accession Index</h1>
+        <p class="text-xs text-[var(--text-dim)] mt-1">Cross-referenced code catalog. Click any code chip to copy to clipboard.</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <a href={`${base}codes.txt`} download class="px-3 py-1.5 rounded bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] text-[var(--accent-cyan)] no-underline">
+          Download codes.txt
+        </a>
+      </div>
+    </div>
+
+    <!-- Search Controls -->
+    <div class="bg-[var(--bg-panel)] border border-[var(--border-rule)] p-4 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs">
+      <div class="relative flex-1 w-full">
+        <input
+          type="search"
+          id="code-search"
+          placeholder="Filter codes (e.g. ABP, IPX, MIDE, SSNI)..."
+          class="w-full bg-[var(--bg-shell)] border border-[var(--border-rule)] focus:border-[var(--accent-cyan)] px-3 py-2 rounded text-[var(--text-bright)] placeholder:text-[var(--text-muted)] focus:outline-none"
+          autocomplete="off"
+        />
+      </div>
+      <div class="text-[var(--text-dim)] whitespace-nowrap" id="codes-counter">
+        Showing {Math.min(1000, totalCodes).toLocaleString()} of {totalCodes.toLocaleString()} codes
+      </div>
+    </div>
+
+    <!-- Code Chips Grid (Optimized virtual/paginated display) -->
+    <div id="codes-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 font-mono text-xs">
+      <!-- Injected client-side for ultra-fast filtering without locking the DOM -->
+    </div>
+
+    <div id="load-more-container" class="text-center py-4 font-mono text-xs hidden">
+      <button id="load-more-btn" type="button" class="px-4 py-2 rounded bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] text-[var(--accent-cyan)] cursor-pointer">
+        Load More Codes
+      </button>
+    </div>
+
+  </div>
+
+  <script is:inline>
+    (function() {
+      const BASE_URL = document.querySelector('link[rel="icon"]')?.href?.replace(/favicon\.svg$/, '') || '/';
+      const grid = document.getElementById('codes-grid');
+      const search = document.getElementById('code-search');
+      const counter = document.getElementById('codes-counter');
+      const loadMoreBtn = document.getElementById('load-more-btn');
+      const loadMoreBox = document.getElementById('load-more-container');
+
+      let ALL_CODES = [];
+      let FILTERED = [];
+      let DISPLAY_COUNT = 400;
+
+      async function init() {
+        try {
+          const res = await fetch(`${BASE_URL}codes.txt`);
+          const text = await res.text();
+          ALL_CODES = text.split('\n').map(c => c.trim().toUpperCase()).filter(Boolean);
+          FILTERED = ALL_CODES;
+          render();
+        } catch (e) {
+          const err = document.createElement('div');
+          err.className = 'col-span-full text-center text-xs text-[var(--accent-amber)]';
+          err.textContent = 'Failed to load codes.txt feed.';
+          grid.replaceChildren(err);
+        }
+      }
+
+      function render() {
+        const slice = FILTERED.slice(0, DISPLAY_COUNT);
+        counter.textContent = `Showing ${slice.length.toLocaleString()} of ${FILTERED.length.toLocaleString()} codes`;
+
+        grid.replaceChildren();
+        if (slice.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'col-span-full text-center py-8 text-xs text-[var(--text-muted)]';
+          empty.textContent = 'No matching codes found.';
+          grid.appendChild(empty);
+          loadMoreBox.classList.add('hidden');
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+        slice.forEach(code => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'p-2 bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] hover:border-[var(--accent-cyan)] rounded text-center text-[var(--text-bright)] hover:text-[var(--accent-cyan)] cursor-pointer transition-colors text-xs truncate';
+          btn.textContent = code;
+          btn.title = `Click to copy ${code}`;
+          btn.onclick = () => {
+            navigator.clipboard.writeText(code).then(() => {
+              btn.textContent = 'COPIED!';
+              btn.classList.add('text-[var(--accent-cyan)]', 'border-[var(--accent-cyan)]');
+              setTimeout(() => {
+                btn.textContent = code;
+                btn.classList.remove('text-[var(--accent-cyan)]', 'border-[var(--accent-cyan)]');
+              }, 1000);
+            });
+          };
+          frag.appendChild(btn);
+        });
+        grid.appendChild(frag);
+
+        if (FILTERED.length > DISPLAY_COUNT) {
+          loadMoreBox.classList.remove('hidden');
+        } else {
+          loadMoreBox.classList.add('hidden');
+        }
+      }
+
+      let timer;
+      search.addEventListener('input', (e) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          const q = e.target.value.trim().toUpperCase();
+          FILTERED = q ? ALL_CODES.filter(c => c.includes(q)) : ALL_CODES;
+          DISPLAY_COUNT = 400;
+          render();
+        }, 150);
+      });
+
+      if (loadMoreBtn) {
+        loadMoreBtn.onclick = () => {
+          DISPLAY_COUNT += 400;
+          render();
+        };
+      }
+
+      init();
+    })();
+  </script>
+</BaseLayout>

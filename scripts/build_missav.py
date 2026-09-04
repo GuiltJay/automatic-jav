@@ -92,9 +92,9 @@ def generate():
     OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
 
-    # Write structured JSON
+    # Write structured JSON (minified to avoid multi-megabyte payload overhead)
     OUTPUT_JSON.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False),
+        json.dumps(data, separators=(",", ":"), ensure_ascii=False),
         encoding="utf-8"
     )
 
@@ -104,7 +104,7 @@ def generate():
     html = template.render(current_page="missav")
     OUTPUT_HTML.write_text(html, encoding="utf-8")
 
-    print(f"[✓] Missav Page build generated.")
+    print("[✓] Missav Page build generated.")
     print(f"Videos: {len(data)}")
     print(f"JSON: {OUTPUT_JSON}")
     print(f"HTML: {OUTPUT_HTML}")

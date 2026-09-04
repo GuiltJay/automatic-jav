@@ -83,7 +83,12 @@ async def get_cf_cookies(start_url: str) -> dict:
             res = await crawler.arun(start_url)
             cookies = {}
             if hasattr(res, "cookies") and res.cookies:
-                cookies.update(res.cookies)
+                if isinstance(res.cookies, list):
+                    for c in res.cookies:
+                        if isinstance(c, dict) and "name" in c and "value" in c:
+                            cookies[c["name"]] = c["value"]
+                elif isinstance(res.cookies, dict):
+                    cookies.update(res.cookies)
             if not cookies:
                 print("⚠️  No cookies extracted — fallback will be used")
             else:
@@ -362,7 +367,7 @@ async def scrape_home_page(session: aiohttp.ClientSession, sem: asyncio.Semaphor
         async def _do_featured(link: str):
             return await scrape_endpoint(session, sem, link, fallback_date=today_str)
 
-        results = await asyncio.gather(*[_do_featured(l) for l in featured_links])
+        results = await asyncio.gather(*[_do_featured(feat_link) for feat_link in featured_links])
         featured_items = [it for batch in results for it in batch]
         save_to_folder("home", "featured", featured_items)
 

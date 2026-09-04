@@ -1,0 +1,207 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+---
+
+<BaseLayout title="Sitemap & Data Feeds · JAV.guru" currentPage="sitemap" activeSource="Sitemap & Exports" itemCount="64,000+ links">
+  <div class="space-y-6 font-mono text-xs">
+
+    <!-- Header -->
+    <div class="border-b border-[var(--border-rule)] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
+        <div class="text-[var(--accent-cyan)] mb-1">INDEX // SITEMAP</div>
+        <h1 class="font-display text-2xl font-bold text-[var(--text-bright)]">Sitemap & Export Center</h1>
+        <p class="text-[var(--text-dim)] mt-1">Full index of indexed web endpoints with host classification and direct raw downloads.</p>
+      </div>
+
+      <!-- Raw Download Center -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href={`${base}sitemap_export.csv`} download class="px-3 py-1.5 rounded bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] text-[var(--accent-cyan)] no-underline">
+          Download sitemap.csv
+        </a>
+        <a href={`${base}sitemap.json`} download class="px-3 py-1.5 rounded bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] text-[var(--text-bright)] no-underline">
+          Download sitemap.json
+        </a>
+      </div>
+    </div>
+
+    <!-- Data Feeds Hub -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <a href={`${base}missav.json`} download class="p-3 bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] rounded no-underline text-inherit block">
+        <div class="text-[10px] text-[var(--text-muted)]">STREAM FEED</div>
+        <div class="font-bold text-[var(--accent-green)] mt-1">missav.json</div>
+        <div class="text-[10px] text-[var(--text-dim)] mt-1">30,000+ playlists</div>
+      </a>
+      <a href={`${base}onejav.json`} download class="p-3 bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] rounded no-underline text-inherit block">
+        <div class="text-[10px] text-[var(--text-muted)]">TORRENT FEED</div>
+        <div class="font-bold text-[var(--accent-amber)] mt-1">onejav.json</div>
+        <div class="text-[10px] text-[var(--text-dim)] mt-1">4,700+ torrents</div>
+      </a>
+      <a href={`${base}javct.json`} download class="p-3 bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] rounded no-underline text-inherit block">
+        <div class="text-[10px] text-[var(--text-muted)]">UNCENSORED FEED</div>
+        <div class="font-bold text-purple-400 mt-1">javct.json</div>
+        <div class="text-[10px] text-[var(--text-dim)] mt-1">940+ videos</div>
+      </a>
+      <a href={`${base}models.json`} download class="p-3 bg-[var(--bg-panel)] hover:bg-[var(--bg-panel-hover)] border border-[var(--border-rule)] rounded no-underline text-inherit block">
+        <div class="text-[10px] text-[var(--text-muted)]">MODELS FEED</div>
+        <div class="font-bold text-[var(--accent-cyan)] mt-1">models.json</div>
+        <div class="text-[10px] text-[var(--text-dim)] mt-1">1,500+ actresses</div>
+      </a>
+    </div>
+
+    <!-- Search / Filter -->
+    <div class="bg-[var(--bg-panel)] border border-[var(--border-rule)] p-4 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="relative flex-1 w-full">
+        <input
+          type="search"
+          id="sitemap-search"
+          placeholder="Filter URLs by code, domain, or path..."
+          class="w-full bg-[var(--bg-shell)] border border-[var(--border-rule)] focus:border-[var(--accent-cyan)] px-3 py-2 rounded text-[var(--text-bright)] placeholder:text-[var(--text-muted)] focus:outline-none"
+          autocomplete="off"
+        />
+      </div>
+      <div id="sitemap-count" class="text-[var(--text-dim)] whitespace-nowrap">
+        Loading sitemap entries...
+      </div>
+    </div>
+
+    <!-- URL List (Paginated so it never locks up with 64,000 links) -->
+    <div class="bg-[var(--bg-panel)] border border-[var(--border-rule)] rounded-lg overflow-hidden">
+      <div class="grid grid-cols-12 p-3 border-b border-[var(--border-rule)] bg-[var(--bg-panel-elevated)] font-bold text-[10px] text-[var(--text-muted)] uppercase">
+        <div class="col-span-3 sm:col-span-2">Date Added</div>
+        <div class="col-span-6 sm:col-span-7">Target URL</div>
+        <div class="col-span-3 sm:col-span-3 text-right">Host Domain</div>
+      </div>
+      <div id="sitemap-list" class="divide-y divide-[var(--border-rule)]">
+        <div class="p-8 text-center text-[var(--text-muted)]">
+          Hydrating sitemap URLs...
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="flex items-center justify-center gap-3 pt-4 font-mono">
+      <button id="sm-prev" class="px-3 py-1.5 rounded bg-[var(--bg-panel)] border border-[var(--border-rule)] disabled:opacity-40 cursor-pointer" disabled>Prev</button>
+      <span id="sm-page" class="text-[var(--text-dim)]">Page 1</span>
+      <button id="sm-next" class="px-3 py-1.5 rounded bg-[var(--bg-panel)] border border-[var(--border-rule)] disabled:opacity-40 cursor-pointer" disabled>Next</button>
+    </div>
+
+  </div>
+
+  <script is:inline>
+    (function() {
+      const BASE_URL = document.querySelector('link[rel="icon"]')?.href?.replace(/favicon\.svg$/, '') || '/';
+      const ITEMS_PER_PAGE = 50;
+
+      let SITEMAP_DATA = [];
+      let FILTERED = [];
+      let PAGE = 1;
+
+      const list = document.getElementById('sitemap-list');
+      const search = document.getElementById('sitemap-search');
+      const countEl = document.getElementById('sitemap-count');
+      const prevBtn = document.getElementById('sm-prev');
+      const nextBtn = document.getElementById('sm-next');
+      const pageEl = document.getElementById('sm-page');
+
+      function safeUrl(raw) {
+        if (!raw || typeof raw !== 'string') return '';
+        const trimmed = raw.trim();
+        if (trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('/')) {
+          return trimmed;
+        }
+        return '';
+      }
+
+      async function init() {
+        try {
+          // Load preview (~93KB) first, fallback to sitemap.json
+          let res = await fetch(`${BASE_URL}sitemap_preview.json`);
+          if (!res.ok) {
+            res = await fetch(`${BASE_URL}sitemap.json`);
+          }
+          SITEMAP_DATA = await res.json();
+          FILTERED = SITEMAP_DATA;
+          countEl.textContent = `${SITEMAP_DATA.length.toLocaleString()} indexed links`;
+          render();
+        } catch (e) {
+          const err = document.createElement('div');
+          err.className = 'p-8 text-center text-[var(--accent-amber)]';
+          err.textContent = 'Failed to load sitemap feed.';
+          list.replaceChildren(err);
+        }
+      }
+
+      function applyFilter() {
+        const q = search.value.trim().toLowerCase();
+        FILTERED = q ? SITEMAP_DATA.filter(r => (r.page_url || '').toLowerCase().includes(q) || (r.host || '').toLowerCase().includes(q)) : SITEMAP_DATA;
+        PAGE = 1;
+        render();
+      }
+
+      function render() {
+        const totalPages = Math.max(1, Math.ceil(FILTERED.length / ITEMS_PER_PAGE));
+        if (PAGE > totalPages) PAGE = totalPages;
+        if (PAGE < 1) PAGE = 1;
+
+        const start = (PAGE - 1) * ITEMS_PER_PAGE;
+        const slice = FILTERED.slice(start, start + ITEMS_PER_PAGE);
+
+        pageEl.textContent = `Page ${PAGE} / ${totalPages} (${FILTERED.length.toLocaleString()} results)`;
+        prevBtn.disabled = PAGE <= 1;
+        nextBtn.disabled = PAGE >= totalPages;
+
+        list.replaceChildren();
+        if (slice.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'p-8 text-center text-[var(--text-muted)]';
+          empty.textContent = 'No sitemap links matched query.';
+          list.appendChild(empty);
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+        slice.forEach(r => {
+          const row = document.createElement('div');
+          row.className = 'grid grid-cols-12 p-3 items-center hover:bg-[var(--bg-panel-hover)] transition-colors';
+
+          const dateCol = document.createElement('div');
+          dateCol.className = 'col-span-3 sm:col-span-2 text-[var(--text-dim)] truncate';
+          dateCol.textContent = r.date_added || '—';
+
+          const urlCol = document.createElement('div');
+          urlCol.className = 'col-span-6 sm:col-span-7 truncate pr-2';
+          const a = document.createElement('a');
+          a.className = 'text-[var(--text-bright)] hover:text-[var(--accent-cyan)] no-underline truncate block';
+          const validUrl = safeUrl(r.page_url);
+          a.href = validUrl || '#';
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = r.page_url || '';
+          urlCol.appendChild(a);
+
+          const hostCol = document.createElement('div');
+          hostCol.className = 'col-span-3 sm:col-span-3 text-right text-[var(--text-muted)] truncate';
+          hostCol.textContent = r.host || '';
+
+          row.appendChild(dateCol);
+          row.appendChild(urlCol);
+          row.appendChild(hostCol);
+          frag.appendChild(row);
+        });
+        list.appendChild(frag);
+      }
+
+      let timer;
+      search.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(applyFilter, 150);
+      });
+
+      prevBtn.onclick = () => { PAGE--; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      nextBtn.onclick = () => { PAGE++; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+      init();
+    })();
+  </script>
+</BaseLayout>
